@@ -23,7 +23,6 @@ export default function ChatInterface() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
   // Check if mobile
   const isMobile = useMediaQuery("(max-width: 768px)")
 
@@ -190,7 +189,7 @@ export default function ChatInterface() {
               {isMobile && !isSidebarOpen && (
                 <button
                   onClick={() => setIsSidebarOpen(true)}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-[6px] hover:bg-indigo-700 transition-colors"
                 >
                   Open Conversations
                 </button>

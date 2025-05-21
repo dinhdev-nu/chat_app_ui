@@ -30,7 +30,7 @@ export default function Home() {
           background="transparent"
           minSize={0.6}
           maxSize={1.4}
-          particleDensity={50} // Reduced from 100 to 50
+          particleDensity={60} // Reduced from 100 to 50
           className="w-full h-full"
           particleColor="#FFFFFF"
         />

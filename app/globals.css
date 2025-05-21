@@ -151,3 +151,17 @@
 .animate-pulse-slow {
   animation: pulse 3s infinite ease-in-out;
 }
+
+
+/* styles/globals.css hoặc global.css */
+.scrollbar-hidden {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+
+#recent {
+  margin-left: 3.1rem;
+}

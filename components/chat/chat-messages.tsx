@@ -12,7 +12,7 @@ interface ChatMessagesProps {
   currentUser: User
   isTyping: boolean
   typingUser: User
-  messagesEndRef: React.RefObject<HTMLDivElement>
+  messagesEndRef: React.RefObject<HTMLDivElement | null>
 }
 
 export default function ChatMessages({

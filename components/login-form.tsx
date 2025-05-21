@@ -9,35 +9,62 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Users, ArrowRight, Github, Mail } from "lucide-react"
-import { FloatingParticles } from "@/components/floating-particles"
 import { useRouter } from "next/navigation"
+import CallApi from "@/config/axios.config"
+
+import { useToast } from "@/hooks/use-toast"
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [error, setError] = useState<boolean>(false)
+
 
   const router = useRouter()
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
     // Simulate API call
-    setTimeout(() => {
+    try {
+      const res = await CallApi.post("/auth/login", {
+        email,
+        password,
+      })
+      res.data.user = {
+        "id": res.data.data.id,
+        "email": res.data.data.email,
+      }
+      toast({
+        title: "Login successful",
+        description: "Welcome back! You are now logged in.",
+        variant: "default",
+      })
+      // setLocalStorage
+      localStorage.setItem(process.env.NEXT_PUBLIC_SESSION_KEY!, res.data.data.token)
+      localStorage.setItem(process.env.NEXT_PUBLIC_USER_KEY!, JSON.stringify(res.data.user))
+    
+    } catch (error) {
+      setError(true)
+      toast({
+        title: "Login failed",
+        description: "Invalid email or password.",
+        variant: "destructive",
+      })
       setIsLoading(false)
-      // Redirect to Discord-style chat page after successful login
-      router.push("/chat/discord")
-    }, 1500)
+      return
+    }
+
+    setIsLoading(false) 
+    router.push("/chat")
   }
+
 
   return (
     <div className="relative">
-      {/* Decorative elements */}
-      <div className="absolute inset-0 -z-10">
-        <FloatingParticles count={10} />
-      </div>
-
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -67,9 +94,11 @@ export default function LoginForm() {
                 placeholder="name@example.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                onFocus={() => setError(false)}
                 required
                 className="bg-[#1a1b26] border-white/10 text-white focus:border-indigo-500 focus:ring-indigo-500/20"
               />
+              {error && <span className="text-red-500 text-sm">Email invalid!</span>}
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -92,6 +121,7 @@ export default function LoginForm() {
                 required
                 className="bg-[#1a1b26] border-white/10 text-white focus:border-indigo-500 focus:ring-indigo-500/20"
               />
+              {error && <span className="text-red-500 text-sm">Password invalid!</span>}
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox id="remember" />

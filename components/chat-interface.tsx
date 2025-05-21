@@ -65,9 +65,7 @@ const MemoizedDirectMessageItem = memo(function DirectMessageItem({
       <div className="flex items-center">
         <div className="relative mr-2">
           <div
-            className={`w-2 h-2 rounded-full absolute bottom-0 right-0 border border-[#1a1b26] ${
-              status === "online" ? "bg-green-500" : status === "idle" ? "bg-yellow-500" : "bg-gray-500"
-            }`}
+            className={`w-2 h-2 rounded-full absolute bottom-0 right-0 border border-[#1a1b26]`}
           ></div>
           <div className="text-sm">{name.charAt(0)}</div>
         </div>
@@ -186,14 +184,14 @@ const MemoizedChatMessage = memo(function ChatMessage({
         {hasAttachment && (
           <div className="mt-2 max-w-sm">
             {attachmentType === "image" && (
-              <div className="relative rounded-md overflow-hidden border border-white/10 hover:border-indigo-500/50 transition-colors cursor-pointer group/image">
+              <div className="relative rounded-[6px] overflow-hidden border border-white/10 hover:border-indigo-500/50 transition-colors cursor-pointer group/image">
                 <img
                   src="/placeholder.svg?height=200&width=350"
                   alt="Attachment"
                   className="w-full h-auto object-cover"
                 />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center">
-                  <button className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-md text-sm transition-colors">
+                  <button className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-[6px] text-sm transition-colors">
                     View Full Size
                   </button>
                 </div>

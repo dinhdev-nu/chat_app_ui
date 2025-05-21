@@ -459,20 +459,20 @@ export default function DiscordChatInterface() {
             </div>
 
             <div className="flex space-x-1">
-              <button className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
+              <button className="w-8 h-8 rounded-[6px] flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
                 <Mic className="h-5 w-5" />
               </button>
-              <button className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
+              <button className="w-8 h-8 rounded-[6px] flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
                 <Headphones className="h-5 w-5" />
               </button>
-              <button className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
+              <button className="w-8 h-8 rounded-[6px] flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
                 <Settings className="h-5 w-5" />
               </button>
             </div>
 
             {/* User menu dropdown */}
             {isUserMenuOpen && (
-              <div className="absolute bottom-16 left-2 w-[calc(100%-16px)] bg-[#1a1b26] rounded-md shadow-lg border border-black/20 overflow-hidden z-50">
+              <div className="absolute bottom-16 left-2 w-[calc(100%-16px)] bg-[#1a1b26] rounded-[6px] shadow-lg border border-black/20 overflow-hidden z-50">
                 <div className="p-2 border-b border-black/20">
                   <div className="flex items-center p-2 rounded hover:bg-indigo-500/20 cursor-pointer">
                     <User className="h-5 w-5 mr-2 text-gray-400" />
@@ -532,18 +532,18 @@ export default function DiscordChatInterface() {
             <div className="flex items-center space-x-2">
               {selectedDM && (
                 <>
-                  <button className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
+                  <button className="w-8 h-8 rounded-[6px] flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
                     <Phone className="h-5 w-5" />
                   </button>
-                  <button className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
+                  <button className="w-8 h-8 rounded-[6px] flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
                     <Video className="h-5 w-5" />
                   </button>
                 </>
               )}
-              <button className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
+              <button className="w-8 h-8 rounded-[6px] flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
                 <Bell className="h-5 w-5" />
               </button>
-              <button className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
+              <button className="w-8 h-8 rounded-[6px] flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
                 <Users className="h-5 w-5" />
               </button>
               <div className="relative">
@@ -554,7 +554,7 @@ export default function DiscordChatInterface() {
                 />
                 <Search className="absolute right-2 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
               </div>
-              <button className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
+              <button className="w-8 h-8 rounded-[6px] flex items-center justify-center text-gray-400 hover:text-white hover:bg-black/20">
                 <HelpCircle className="h-5 w-5" />
               </button>
             </div>
@@ -720,7 +720,7 @@ export default function DiscordChatInterface() {
         {/* New Conversation Modal */}
         {showNewConversationModal && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
-            <div className="bg-[#2d2f3e] rounded-md border border-black/20 w-full max-w-md overflow-hidden shadow-lg">
+            <div className="bg-[#2d2f3e] rounded-[6px] border border-black/20 w-full max-w-md overflow-hidden shadow-lg">
               <div className="p-4 border-b border-black/20 flex items-center justify-between">
                 <h3 className="text-white font-medium">New Conversation</h3>
                 <button onClick={closeNewConversation} className="text-gray-400 hover:text-white">
@@ -980,14 +980,14 @@ function ChatMessage({
           {hasAttachment && (
             <div className="mt-2 max-w-sm">
               {attachmentType === "image" && (
-                <div className="relative rounded-md overflow-hidden border border-black/20 hover:border-indigo-500/50 transition-colors cursor-pointer group/image">
+                <div className="relative rounded-[6px] overflow-hidden border border-black/20 hover:border-indigo-500/50 transition-colors cursor-pointer group/image">
                   <img
                     src="/placeholder.svg?height=200&width=350"
                     alt="Attachment"
                     className="w-full h-auto object-cover"
                   />
                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center">
-                    <button className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-md text-sm transition-colors">
+                    <button className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-[6px] text-sm transition-colors">
                       View Full Size
                     </button>
                   </div>

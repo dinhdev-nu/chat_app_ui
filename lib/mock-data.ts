@@ -41,6 +41,37 @@ export function generateMockData() {
       avatar: "/placeholder.svg?height=40&width=40",
       status: "online",
     },
+    {
+      id: "user-6",
+      name: "Riley Brown",
+      avatar: "/placeholder.svg?height=40&width=40",
+      status: "online",
+    },
+    {
+      id: "user-6",
+      name: "Riley Brown",
+      avatar: "/placeholder.svg?height=40&width=40",
+      status: "online",
+    },
+    {
+      id: "user-6",
+      name: "Riley Brown",
+      avatar: "/placeholder.svg?height=40&width=40",
+      status: "online",
+    },
+    {
+      id: "user-6",
+      name: "Riley Brown",
+      avatar: "/placeholder.svg?height=40&width=40",
+      status: "online",
+    },
+    {
+      id: "user-6",
+      name: "Riley Brown",
+      avatar: "/placeholder.svg?height=40&width=40",
+      status: "online",
+    },
+    
   ]
 
   // Generate conversations

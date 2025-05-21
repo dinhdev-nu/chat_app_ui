@@ -41,7 +41,7 @@ const features = [
 export default function CommunityFeatures() {
   const controls = useAnimation()
   const [ref, inView] = useInView({
-    triggerOnce: false,
+    triggerOnce: true,
     threshold: 0.1,
   })
 
@@ -88,7 +88,7 @@ export default function CommunityFeatures() {
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              initial="hidden"
+              initial= {"hidden"}
               animate={controls}
               variants={{
                 hidden: { opacity: 0, y: 50 },
@@ -99,7 +99,7 @@ export default function CommunityFeatures() {
                 },
               }}
               whileHover={{ y: -5 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20, duration: 0.3 }}
               className="bg-gradient-to-b from-[#1e1f2e] to-[#1a1b26] border border-white/10 rounded-xl p-6 hover:border-indigo-500/50 transition-all shadow-lg hover:shadow-indigo-500/10 relative overflow-hidden group"
             >
               {/* Sparkle effect on hover */}

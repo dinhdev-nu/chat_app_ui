@@ -82,7 +82,7 @@ export function FloatingIcons({ count = 5 }) {
             repeatType: "reverse",
           }}
         >
-          <div className="relative w-16 h-16 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform">
+          <div className="m-0 p-0 relative w-16 h-16 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform">
             {icons[i % icons.length]}
           </div>
         </motion.div>

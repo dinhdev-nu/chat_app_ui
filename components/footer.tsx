@@ -36,7 +36,7 @@ export default function Footer() {
                 <input
                   type="email"
                   placeholder="Enter your email"
-                  className="bg-[#1a1b26] border border-white/10 rounded-l-md px-4 py-2 text-white w-full md:w-64 focus:outline-none focus:border-indigo-500"
+                  className="bg-[#1a1b26] border border-white/10 rounded-l-[6px] px-4 py-2 text-white w-full md:w-64 focus:outline-none focus:border-indigo-500"
                 />
                 <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-l-none">Subscribe</Button>
               </div>
@@ -54,7 +54,7 @@ export default function Footer() {
               A vibrant community platform where people connect, share ideas, and build relationships in real-time.
             </p>
             <div className="flex space-x-4 mb-6">
-              <SocialIcon icon={<Github className="w-5 h-5" />} href="https://github.com" />
+              <SocialIcon icon={<Github className="w-5 h-5" />} href="https://github.com/dinhdev-nu" />
               <SocialIcon icon={<Twitter className="w-5 h-5" />} href="https://twitter.com" />
               <SocialIcon icon={<Instagram className="w-5 h-5" />} href="https://instagram.com" />
               <SocialIcon icon={<Linkedin className="w-5 h-5" />} href="https://linkedin.com" />

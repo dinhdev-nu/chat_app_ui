@@ -1,6 +1,8 @@
 import RegistrationForm from "@/components/registration-form"
 import { SparklesCore } from "@/components/sparkles"
 import { GlowingBackground } from "@/components/glowing-background"
+import { FloatingIcons } from "@/components/floating-icons"
+import { Toaster } from "@/components/ui/toaster"
 
 export default function SignupPage() {
   return (
@@ -17,6 +19,9 @@ export default function SignupPage() {
           particleColor="#FFFFFF"
         />
       </div>
+      <div className="h-full w-full absolute inset-0 z-0">
+        <FloatingIcons count={8} />
+      </div>
 
       {/* Glowing background effect */}
       <GlowingBackground color="indigo" position="left" />
@@ -27,6 +32,9 @@ export default function SignupPage() {
           <RegistrationForm />
         </div>
       </div>
+
+      {/* Toast */}
+      < Toaster />
     </main>
   )
 }

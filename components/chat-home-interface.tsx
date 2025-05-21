@@ -584,14 +584,14 @@ function ChatMessage({
         {hasAttachment && (
           <div className="mt-2 max-w-sm">
             {attachmentType === "image" && (
-              <div className="relative rounded-md overflow-hidden border border-white/10 hover:border-indigo-500/50 transition-colors cursor-pointer group/image">
+              <div className="relative rounded-[6px] overflow-hidden border border-white/10 hover:border-indigo-500/50 transition-colors cursor-pointer group/image">
                 <img
                   src="/placeholder.svg?height=200&width=350"
                   alt="Attachment"
                   className="w-full h-auto object-cover"
                 />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover/image:opacity-100 transition-opacity flex items-center justify-center">
-                  <button className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-md text-sm transition-colors">
+                  <button className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-[6px] text-sm transition-colors">
                     View Full Size
                   </button>
                 </div>

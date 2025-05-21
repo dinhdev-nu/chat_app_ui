@@ -10,8 +10,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Users, ArrowRight, CheckCircle, ChevronLeft } from "lucide-react"
 import { FloatingParticles } from "@/components/floating-particles"
+import CallApi from "@/config/axios.config"
+import { isOTPValid } from "@/lib/utils"
 
-type RegistrationStep = "email" | "otp" | "password" | "success"
+import { useToast } from "@/hooks/use-toast"
+
+type RegistrationStep = "email" | "otp" | "details" | "password" | "success"
 
 export default function RegistrationForm() {
   const router = useRouter()
@@ -22,6 +26,15 @@ export default function RegistrationForm() {
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState("")
+  const [displayName, setDisplayName] = useState("")
+  const [loginName, setLoginName] = useState("")
+  const [dateOfBirth, setDateOfBirth] = useState("")
+  const [birthDay, setBirthDay] = useState("")
+  const [birthMonth, setBirthMonth] = useState("")
+  const [birthYear, setBirthYear] = useState("")
+  const [isResending, setIsResending] = useState(false)
+
+  const { toast} = useToast()
 
   // Memoize handlers to prevent recreation on each render
   const handleOtpChange = useCallback(
@@ -57,42 +70,100 @@ export default function RegistrationForm() {
     [otp],
   )
 
-  const handleEmailSubmit = useCallback((e: React.FormEvent) => {
+  const handleEmailSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setIsLoading(true)
 
-    // Simulate API call to check email and send OTP
-    setTimeout(() => {
-      setIsLoading(false)
+    // API call to check email and send OTP
+    try {
+      if (!email) {
+        setError("Email is required")
+        toast({
+          title: "Email Required",
+          description: "Please enter a valid email address.",
+          variant: "warning",
+        })
+        setIsLoading(false)
+        return
+      }
+
+      await CallApi.post("/auth/register", { email })
       setCurrentStep("otp")
-    }, 1500)
-  }, [])
+
+      CallApi.post("/auth/send-otp", { email })
+      toast({
+        title: "Registration Successful",
+        description: "A 6-digit code has been sent to your email.",
+        variant: "info",
+      })
+      
+    } catch (error) {
+      toast({
+        title: "Registration Failed",
+        description: "An error occurred while sending the OTP. Please try again.",
+        variant: "destructive",
+      })
+      setError("Something went wrong. Please try again.")
+    }
+    
+    
+    setIsLoading(false)
+
+  }, [email, toast])
 
   const handleOtpSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault()
       setError("")
 
       const otpValue = otp.join("")
-      if (otpValue.length !== 6) {
+      if (!isOTPValid(otpValue)) {
         setError("Please enter a valid 6-digit code")
+
+        toast({
+          title: "Invalid OTP",
+          description: "Please enter a valid 6-digit code.",
+          variant: "warning",
+        })
+
         return
       }
-
       setIsLoading(true)
 
-      // Simulate API call to verify OTP
-      setTimeout(() => {
+      // API call to verify OTP
+      try {
+        if (!email) {
+        setError("Email is required")
         setIsLoading(false)
-        setCurrentStep("password")
-      }, 1500)
+        return
+        }
+        await CallApi.post("/auth/verify-otp", { email, otp: otpValue })
+
+        toast({
+          title: "OTP Verified",
+          description: "Your OTP has been verified successfully.",
+          variant: "success",
+        })
+
+        setCurrentStep("details")
+      } catch (err) {
+        setError("Invalid OTP. Please try again.")
+        toast({
+          title: "Invalid OTP",
+          description: "The OTP you entered is incorrect. Please try again.",
+          variant: "destructive",
+        })
+        setOtp(["", "", "", "", "", ""])
+      }
+
+      setIsLoading(false)
     },
-    [otp],
+    [otp, toast],
   )
 
   const handlePasswordSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault()
       setError("")
 
@@ -105,32 +176,114 @@ export default function RegistrationForm() {
         setError("Passwords do not match")
         return
       }
-
+      if (!email) {
+        setError("Email is required")
+        setIsLoading(false)
+        return
+      }
       setIsLoading(true)
 
       // Simulate API call to create account
+      try {
+        
+        await CallApi.post("/auth/sign-up", {
+          email, 
+          password,
+        })
+
+        toast({
+          title: "Account Created",
+          description: "Your account has been created successfully.",
+          variant: "success",
+        })
+
+        setCurrentStep("success")
+      } catch (error) {
+        toast({
+          title: "Account Creation Failed",
+          description: "An error occurred while creating your account. Please try again.",
+          variant: "destructive",
+        })
+        setError("Something went wrong. Please try again.")
+      }
+      setIsLoading(false)
+      
+        // Redirect to home after success
+      setTimeout(() => {
+        router.push("/")
+      }, 3000)
+    },
+    [password, confirmPassword, router, email, toast],
+  )
+
+  const handleDetailsSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault()
+      setError("")
+
+      if (!displayName.trim() || displayName.length < 3) {
+        setError("Display name is required")
+        return
+      }
+
+      if (!loginName.trim() || loginName.length < 5) {
+        setError("Login name is required")
+        return
+      }
+
+      if (!birthDay || !birthMonth || !birthYear) {
+        setError("Please complete your date of birth")
+        return
+      }
+
+      // Combine the date parts into a single date string
+      const formattedDate = `${birthYear}-${birthMonth}-${birthDay}`
+      setDateOfBirth(formattedDate)
+
+      setIsLoading(true)
+
+      // Simulate API call to save user details
       setTimeout(() => {
         setIsLoading(false)
-        setCurrentStep("success")
-
-        // Redirect to home after success
-        setTimeout(() => {
-          router.push("/")
-        }, 3000)
+        toast({
+          title: "Details Saved",
+          description: "Your profile details have been saved successfully.",
+          variant: "success",
+        })
+        setCurrentStep("password")
       }, 1500)
     },
-    [password, confirmPassword, router],
+    [displayName, loginName, birthDay, birthMonth, birthYear, toast],
   )
+
+  const handleOnclickResendOtp = useCallback(async () => {
+    if (!email) {
+      setError("Email is required to resend OTP.")
+      return
+    }
+
+    setIsResending(true)
+    try {
+      await CallApi.delete("/auth/del-otp", { data: { email } })
+      await CallApi.post("/auth/send-otp", { email })
+    } catch (error) {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setIsResending(false)
+    }
+  }, [email])
 
   // Memoize progress calculation
   const getProgress = useMemo(() => {
     switch (currentStep) {
       case "email":
-        return 25
+        return 20
       case "otp":
-        return 50
+        return 40
+      case "details":
+        return 60
       case "password":
-        return 75
+        return 80
       case "success":
         return 100
       default:
@@ -147,7 +300,10 @@ export default function RegistrationForm() {
             className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${
               currentStep === "email"
                 ? "bg-indigo-500 text-white"
-                : currentStep === "otp" || currentStep === "password" || currentStep === "success"
+                : currentStep === "otp" ||
+                    currentStep === "details" ||
+                    currentStep === "password" ||
+                    currentStep === "success"
                   ? "bg-indigo-500/20 text-indigo-300"
                   : "bg-white/10 text-gray-400"
             }`}
@@ -161,7 +317,7 @@ export default function RegistrationForm() {
             className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${
               currentStep === "otp"
                 ? "bg-indigo-500 text-white"
-                : currentStep === "password" || currentStep === "success"
+                : currentStep === "details" || currentStep === "password" || currentStep === "success"
                   ? "bg-indigo-500/20 text-indigo-300"
                   : "bg-white/10 text-gray-400"
             }`}
@@ -173,6 +329,20 @@ export default function RegistrationForm() {
         <div className="flex items-center text-xs text-gray-400">
           <div
             className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${
+              currentStep === "details"
+                ? "bg-indigo-500 text-white"
+                : currentStep === "password" || currentStep === "success"
+                  ? "bg-indigo-500/20 text-indigo-300"
+                  : "bg-white/10 text-gray-400"
+            }`}
+          >
+            3
+          </div>
+          <span>Profile</span>
+        </div>
+        <div className="flex items-center text-xs text-gray-400">
+          <div
+            className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${
               currentStep === "password"
                 ? "bg-indigo-500 text-white"
                 : currentStep === "success"
@@ -180,7 +350,7 @@ export default function RegistrationForm() {
                   : "bg-white/10 text-gray-400"
             }`}
           >
-            3
+            4
           </div>
           <span>Password</span>
         </div>
@@ -257,7 +427,7 @@ export default function RegistrationForm() {
                     />
                   </div>
 
-                  {error && <div className="text-red-500 text-sm">{error}</div>}
+                  {error && <span className="text-red-500 text-xs">{error}</span>}
 
                   <Button
                     type="submit"
@@ -337,13 +507,17 @@ export default function RegistrationForm() {
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
                       Didn't receive a code?{" "}
-                      <button type="button" className="text-indigo-400 hover:text-indigo-300">
-                        Resend
+                      <button 
+                        type="button" 
+                        className="text-indigo-400 hover:text-indigo-300"
+                        onClick={handleOnclickResendOtp}
+                        >
+                        {isResending ? "Resending..." : "Resend"}
                       </button>
                     </p>
                   </div>
 
-                  {error && <div className="text-red-500 text-sm">{error}</div>}
+                  {error && <span className="text-red-500 text-xs">{error}</span>}
 
                   <div className="flex gap-3">
                     <Button
@@ -388,6 +562,200 @@ export default function RegistrationForm() {
                       ) : (
                         <div className="flex items-center">
                           Verify
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                        </div>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </motion.div>
+            )}
+
+            {currentStep === "details" && (
+              <motion.div
+                key="details-step"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <form onSubmit={handleDetailsSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <h2 className="text-xl font-semibold text-white">Your profile</h2>
+                    <p className="text-sm text-gray-400">Tell us a bit about yourself</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="displayName" className="text-sm font-medium text-gray-300">
+                      Display Name
+                    </label>
+                    <Input
+                      id="displayName"
+                      type="text"
+                      placeholder="How others will see you"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      required
+                      className="bg-[#1a1b26] border-white/10 text-white focus:border-indigo-500 focus:ring-indigo-500/20"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="loginName" className="text-sm font-medium text-gray-300">
+                      Username
+                    </label>
+                    <Input
+                      id="loginName"
+                      type="text"
+                      placeholder="For logging in"
+                      value={loginName}
+                      onChange={(e) => setLoginName(e.target.value)}
+                      required
+                      className="bg-[#1a1b26] border-white/10 text-white focus:border-indigo-500 focus:ring-indigo-500/20"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-300">
+                      Date of Birth
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {/* Month dropdown */}
+                      <div className="relative">
+                        <select
+                          id="birthMonth"
+                          value={birthMonth}
+                          onChange={(e) => setBirthMonth(e.target.value)}
+                          required
+                          className="w-full bg-[#1a1b26] border border-white/10 rounded-[6px] px-3 py-2 text-white appearance-none focus:border-indigo-500 focus:ring-indigo-500/20 focus:outline-none"
+                        >
+                          <option value="" disabled>
+                            Month
+                          </option>
+                          <option value="01">January</option>
+                          <option value="02">February</option>
+                          <option value="03">March</option>
+                          <option value="04">April</option>
+                          <option value="05">May</option>
+                          <option value="06">June</option>
+                          <option value="07">July</option>
+                          <option value="08">August</option>
+                          <option value="09">September</option>
+                          <option value="10">October</option>
+                          <option value="11">November</option>
+                          <option value="12">December</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                          <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Day dropdown */}
+                      <div className="relative">
+                        <select
+                          id="birthDay"
+                          value={birthDay}
+                          onChange={(e) => setBirthDay(e.target.value)}
+                          required
+                          className="w-full max-h-48 overflow-y-auto bg-[#1a1b26] border border-white/10 rounded-[6px] px-3 py-2 text-white appearance-none focus:border-indigo-500 focus:ring-indigo-500/20 focus:outline-none"
+                        >
+                          <option value="" disabled>
+                            Day
+                          </option>
+                          {[...Array(31)].map((_, i) => {
+                            const day = (i + 1).toString().padStart(2, "0")
+                            return (
+                              <option key={day} value={day}>
+                                {day}
+                              </option>
+                            )
+                          })}
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                          <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* Year dropdown */}
+                      <div className="relative">
+                        <select
+                          id="birthYear"
+                          value={birthYear}
+                          onChange={(e) => setBirthYear(e.target.value)}
+                          required
+                          className="w-full bg-[#1a1b26] border border-white/10 rounded-[6px] px-3 py-2 text-white appearance-none focus:border-indigo-500 focus:ring-indigo-500/20 focus:outline-none"
+                        >
+                          <option value="" disabled>
+                            Year
+                          </option>
+                          {[...Array(100)].map((_, i) => {
+                            const year = (new Date().getFullYear() - i).toString()
+                            return (
+                              <option key={year} value={year}>
+                                {year}
+                              </option>
+                            )
+                          })}
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                          <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-gray-500">You must be at least 13 years old to register</p>
+                  </div>
+
+                  {error && <span className="text-red-500 text-xs">{error}</span>}
+
+                  <div className="flex gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setCurrentStep("otp")}
+                      className="border-white/10 text-white hover:bg-white/5"
+                    >
+                      <ChevronLeft className="mr-2 h-4 w-4" />
+                      Back
+                    </Button>
+
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white"
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center">
+                          <svg
+                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Processing...
+                        </div>
+                      ) : (
+                        <div className="flex items-center">
+                          Continue
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </div>
                       )}
@@ -442,7 +810,7 @@ export default function RegistrationForm() {
                     />
                   </div>
 
-                  {error && <div className="text-red-500 text-sm">{error}</div>}
+                  {error && <span className="text-red-500 text-xs">{error}</span>}
 
                   <div className="flex gap-3">
                     <Button

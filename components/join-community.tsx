@@ -51,11 +51,6 @@ export default function JoinCommunity() {
   const [activeTab, setActiveTab] = useState("join")
 
   useEffect(() => {
-    if (inView) {
-      controls.start("visible")
-    }
-
-    // Pre-load both tab contents to avoid loading delay
     controls.start("visible")
   }, [controls, inView])
 
@@ -106,11 +101,7 @@ export default function JoinCommunity() {
           <div className="flex justify-center mb-10">
             <div className="bg-[#1a1b26]/80 backdrop-blur-md rounded-full p-1 flex">
               <button
-                onClick={() => {
-                  setActiveTab("join")
-                  // Force immediate animation update
-                  controls.start("visible")
-                }}
+                onClick={() => setActiveTab("join")}
                 className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
                   activeTab === "join" ? "bg-indigo-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
                 }`}
@@ -118,11 +109,7 @@ export default function JoinCommunity() {
                 Join Now
               </button>
               <button
-                onClick={() => {
-                  setActiveTab("plans")
-                  // Force immediate animation update
-                  controls.start("visible")
-                }}
+                onClick={() => setActiveTab("plans")}
                 className={`px-6 py-2 rounded-full text-sm font-medium transition-all ${
                   activeTab === "plans" ? "bg-indigo-600 text-white shadow-lg" : "text-gray-400 hover:text-white"
                 }`}
@@ -133,18 +120,21 @@ export default function JoinCommunity() {
           </div>
 
           {activeTab === "join" && (
-            <>
+            <motion.div
+              key="join-tab" // Buộc React render lại khi tab thay đổi
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
               {/* Stats section */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
                 {stats.map((stat, index) => (
                   <motion.div
                     key={index}
-                    initial="hidden"
-                    animate={controls}
-                    variants={{
-                      hidden: { opacity: 0, y: 20 },
-                      visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-                    }}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
                     className="bg-[#1e1f2e]/80 backdrop-blur-md border border-white/10 rounded-xl p-6 text-center shadow-lg hover:border-indigo-500/30 transition-colors"
                   >
                     <div className="flex justify-center mb-2">{stat.icon}</div>
@@ -153,15 +143,8 @@ export default function JoinCommunity() {
                   </motion.div>
                 ))}
               </div>
-
               {/* CTA card */}
-              <motion.div
-                initial="hidden"
-                animate={controls}
-                variants={{
-                  hidden: { opacity: 0, y: 50 },
-                  visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-                }}
+              <div
                 className="bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl p-10 border border-indigo-500/30 text-center relative overflow-hidden shadow-[0_0_25px_rgba(79,70,229,0.2)]"
               >
                 {/* Decorative elements */}
@@ -196,62 +179,67 @@ export default function JoinCommunity() {
                     Sign in
                   </a>
                 </p>
-              </motion.div>
-            </>
+              </div>
+            </motion.div>
           )}
 
           {activeTab === "plans" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {plans.map((plan, index) => (
-                <motion.div
-                  key={index}
-                  initial="hidden"
-                  animate={controls}
-                  variants={{
-                    hidden: { opacity: 0, y: 50 },
-                    visible: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-                  }}
-                  className={`bg-[#1e1f2e]/80 backdrop-blur-md rounded-xl p-8 border ${
-                    plan.popular ? "border-indigo-500/50" : "border-white/10"
-                  } relative overflow-hidden shadow-lg ${
-                    plan.popular ? "shadow-indigo-500/20" : ""
-                  } hover:shadow-indigo-500/20 transition-all`}
-                >
-                  {plan.popular && (
-                    <div className="absolute top-0 right-0">
-                      <div className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">Popular</div>
-                    </div>
-                  )}
-                  <div className="mb-6">
-                    <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
-                    <div className="flex items-baseline">
-                      <span className="text-3xl font-bold text-white">{plan.price}</span>
-                      <span className="text-gray-400 ml-2">{plan.period}</span>
-                    </div>
-                    <p className="text-gray-400 mt-2">{plan.description}</p>
-                  </div>
-                  <div className="mb-8">
-                    <ul className="space-y-3">
-                      {plan.features.map((feature, i) => (
-                        <li key={i} className="flex items-start">
-                          <Check className="h-5 w-5 text-indigo-500 mr-2 shrink-0 mt-0.5" />
-                          <span className="text-gray-300">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <Button
-                    className={`w-full ${
-                      plan.popular
-                        ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                        : "bg-white/10 hover:bg-white/20 text-white"
-                    }`}
+            <motion.div
+              key="plans-tab" // Buộc React render lại khi tab thay đổi
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {plans.map((plan, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
+                    className={`bg-[#1e1f2e]/80 backdrop-blur-md rounded-xl p-8 border ${
+                      plan.popular ? "border-indigo-500/50" : "border-white/10"
+                    } relative overflow-hidden shadow-lg ${
+                      plan.popular ? "shadow-indigo-500/20" : ""
+                    } hover:shadow-indigo-500/20 transition-all`}
                   >
-                    {plan.cta}
-                  </Button>
-                </motion.div>
-              ))}
-            </div>
+                    {plan.popular && (
+                      <div className="absolute top-0 right-0">
+                        <div className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">Popular</div>
+                      </div>
+                    )}
+                    <div className="mb-6">
+                      <h3 className="text-xl font-bold text-white mb-2">{plan.name}</h3>
+                      <div className="flex items-baseline">
+                        <span className="text-3xl font-bold text-white">{plan.price}</span>
+                        <span className="text-gray-400 ml-2">{plan.period}</span>
+                      </div>
+                      <p className="text-gray-400 mt-2">{plan.description}</p>
+                    </div>
+                    <div className="mb-8">
+                      <ul className="space-y-3">
+                        {plan.features.map((feature, i) => (
+                          <li key={i} className="flex items-start">
+                            <Check className="h-5 w-5 text-indigo-500 mr-2 shrink-0 mt-0.5" />
+                            <span className="text-gray-300">{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    <Button
+                      className={`w-full ${
+                        plan.popular
+                          ? "bg-indigo-600 hover:bg-indigo-700 text-white"
+                          : "bg-white/10 hover:bg-white/20 text-white"
+                      }`}
+                    >
+                      {plan.cta}
+                    </Button>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
           )}
         </motion.div>
       </div>
