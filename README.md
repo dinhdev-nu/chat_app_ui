@@ -1,14 +1,14 @@
 # Chat App UI
 
-Giao diện người dùng cho dự án chat real-time với xác thực người dùng, sử dụng Next.js 15 và TypeScript.
+UI for real-time chat project with authenticated users, using Next.js 15 and TypeScript.
 
-## 🚀 Tính năng
+## 🚀 Features
 
-- Đăng nhập/Đăng ký người dùng
-- Giao diện chat real-time
-- Quản lý phòng chat
+- User Login/Register
+- Real-time Chat UI
+- Manage chats in rooms
 
-## 🛠️ Cài đặt
+## 🛠️ Settings
 
 ```bash
 git clone https://github.com/dinhdev-nu/chat_app_ui.git
