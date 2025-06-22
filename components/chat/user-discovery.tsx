@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,31 +8,92 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar } from "@/components/ui/avatar"
 import { Search, UserPlus, X, Users } from "lucide-react"
+import { CallApiWithAuth } from "@/config/axios.config"
 
-// Mock user data
-const suggestedUsers = [
-  { id: 1, name: "Alex Johnson", status: "online", avatar: "/placeholder.svg?height=40&width=40", mutualFriends: 3 },
-  { id: 2, name: "Jamie Smith", status: "online", avatar: "/placeholder.svg?height=40&width=40", mutualFriends: 5 },
-  { id: 3, name: "Casey Wilson", status: "offline", avatar: "/placeholder.svg?height=40&width=40", mutualFriends: 1 },
-  { id: 4, name: "Riley Brown", status: "online", avatar: "/placeholder.svg?height=40&width=40", mutualFriends: 2 },
-  { id: 5, name: "Morgan Lee", status: "away", avatar: "/placeholder.svg?height=40&width=40", mutualFriends: 4 },
-  { id: 6, name: "Jordan Taylor", status: "online", avatar: "/placeholder.svg?height=40&width=40", mutualFriends: 7 },
-  { id: 7, name: "Quinn Davis", status: "offline", avatar: "/placeholder.svg?height=40&width=40", mutualFriends: 0 },
-]
+
+type User = {
+  id: number
+  name: string
+  status: "online" | "offline" | "away"
+  avatar: string
+  mutualFriends: number
+}
 
 interface UserDiscoveryProps {
   onClose: () => void
   onAddFriend: (user: any) => void
+  onAddConversation?: (user: any) => void
 }
 
-export default function UserDiscovery({ onClose, onAddFriend }: UserDiscoveryProps) {
+export default function UserDiscovery({ onClose, onAddFriend, onAddConversation }: UserDiscoveryProps) {
   const [searchQuery, setSearchQuery] = useState("")
+  const [suggestedUsers, setSuggestedUsers] = useState<User[]>([])
+  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null)
+  const [firstSuggestedUsers, setFirstSuggestedUsers] = useState<User[] | null>(null)
 
-  // Filter users based on search query
-  const filteredUsers = searchQuery
-    ? suggestedUsers.filter((user) => user.name.toLowerCase().includes(searchQuery.toLowerCase()))
-    : suggestedUsers
+  useEffect(() => {
+    if (firstSuggestedUsers) {
+      setSuggestedUsers(firstSuggestedUsers)
+      return
+    }
+    const fetchData = async () => {
+        try {
+          const response = await CallApiWithAuth.get("/user/search?username=")
+          const users: User[] = response.data.data?.map((user: any) => ({
+            id: user.user_id,
+            name: user.user_nickname,
+            status: user.status || "offline",
+            avatar: user.user_avatar || "/placeholder.svg",
+            mutualFriends: user.mutualFriends || 0,
+          })) || [] 
+          setSuggestedUsers(users)
+          setFirstSuggestedUsers(users)
+        } catch (error) {
+          console.error("Error fetching user data:", error)
+        }
+      }
+
+    fetchData()
+  }, [])  
+
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSuggestedUsers(firstSuggestedUsers || [])
+      return
+    }
+
+    try {
+      const response = await CallApiWithAuth.get(`/user/search?username=${query}`)
+      const users: User[] = response.data.data?.map((user: any) => ({
+        id: user.user_id,
+        name: user.user_nickname,
+        status: user.status || "offline",
+        avatar: user.user_avatar || "/placeholder.svg",
+        mutualFriends: user.mutualFriends || 0,
+      })) || []
+      setSuggestedUsers(users)
+      
+    } catch (error) {
+      console.error("Error searching users:", error)
+    }
+  }
   
+  const handleInputChange = (query: string) => {
+    setSearchQuery(query)
+
+    // Clear previous timeout if it exists
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout)
+    }
+
+    // Set a new timeout to delay the search
+    const timeout = setTimeout(() => {
+      handleSearch(query)
+    }, 1000) // Delay 1 second
+
+    setDebounceTimeout(timeout)
+  }
+
   return (
     <Card className="w-80 bg-[#1e1f2e]/95 backdrop-blur-md border border-indigo-500/20 shadow-lg overflow-hidden">
       <div className="p-3 border-b border-white/10 flex items-center justify-between">
@@ -51,21 +112,22 @@ export default function UserDiscovery({ onClose, onAddFriend }: UserDiscoveryPro
           <Input
             placeholder="Search users..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => handleInputChange(e.target.value)}
             className="pl-9 bg-[#1a1b26] border-white/10 text-white"
           />
         </div>
       </div>
 
       <ScrollArea className="h-80">
-        {filteredUsers.length > 0 ? (
+        {suggestedUsers.length > 0 ? (
           <div className="p-2">
-            {filteredUsers.map((user) => (
+            {suggestedUsers.map((user) => (
               <motion.div
                 key={user.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="p-3 rounded-lg hover:bg-white/5 transition-colors"
+                onClick={() => onAddConversation && onAddConversation(user)}
               >
                 <div className="flex items-center">
                   <div className="relative mr-3">

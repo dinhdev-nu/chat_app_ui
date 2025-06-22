@@ -1,6 +1,5 @@
 // app/chat/page.tsx
 import type { Metadata } from "next"
-import { SparklesCore } from "@/components/sparkles"
 import { Toaster } from "@/components/ui/toaster"
 import ImmersiveChatWrapper from "@/app/chat/conversation/page"
 
@@ -17,7 +16,7 @@ export default function ChatPage() {
         <ImmersiveChatWrapper />
 
       {/* Toast notifications */}
-      <Toaster />
+      <Toaster /> 
     </main>
   )
 }

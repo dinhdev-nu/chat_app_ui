@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Users, ArrowRight, CheckCircle, ChevronLeft } from "lucide-react"
 import { FloatingParticles } from "@/components/floating-particles"
-import CallApi from "@/config/axios.config"
+import {CallApi} from "@/config/axios.config"
 import { isOTPValid } from "@/lib/utils"
 
 import { useToast } from "@/hooks/use-toast"

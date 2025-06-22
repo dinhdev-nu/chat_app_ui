@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Users, ArrowRight, Github, Mail } from "lucide-react"
 import { useRouter } from "next/navigation"
-import CallApi from "@/config/axios.config"
+import { CallApi } from "@/config/axios.config"
 
 import { useToast } from "@/hooks/use-toast"
 
@@ -45,7 +45,7 @@ export default function LoginForm() {
       })
       // setLocalStorage
       localStorage.setItem(process.env.NEXT_PUBLIC_SESSION_KEY!, res.data.data.token)
-      localStorage.setItem(process.env.NEXT_PUBLIC_USER_KEY!, JSON.stringify(res.data.user))
+      localStorage.setItem(process.env.NEXT_PUBLIC_USER_KEY!, JSON.stringify(res.data.data.user))
     
     } catch (error) {
       setError(true)
