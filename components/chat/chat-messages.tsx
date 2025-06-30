@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect } from "react"
+import React, { useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Avatar } from "@/components/ui/avatar"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -10,7 +10,7 @@ import { Message, User } from "@/types/chat"
 
 export default function ChatMessages({ messages, currentUser, receiverUser, isTyping, typingUser, messagesEndRef }: {
   messages: Message[],
-  currentUser: User | null,
+  currentUser: User,
   receiverUser: User | null,
   isTyping: boolean,
   typingUser: User,
@@ -109,7 +109,7 @@ export default function ChatMessages({ messages, currentUser, receiverUser, isTy
   )
 }
 
-function MessageItem({ message, isCurrentUser }: {
+const MessageItem = React.memo(function MessageItem({ message, isCurrentUser }: {
   message: Message
   isCurrentUser: boolean
 }) {
@@ -216,7 +216,7 @@ function MessageItem({ message, isCurrentUser }: {
       </div>
     </motion.div>
   )
-}
+})
 
 // Helper function to group messages by date
 function groupMessagesByDate(messages: Message[]): Record<string, any[]> {

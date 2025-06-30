@@ -1,14 +1,13 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
-import { motion, AnimatePresence, number } from "framer-motion"
+import React, { useState, useRef, useEffect, useCallback } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { useToast } from "@/hooks/use-toast"
 import { Avatar } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { TooltipRoot, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
-import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import ChatMessages from "@/components/chat/chat-messages"
@@ -36,11 +35,14 @@ import {
   Bookmark,
   LogOut,
 } from "lucide-react"
-import { AckMessage, Conversation, Message, MessageRequest } from "@/types/chat"
-import { useRouter } from "next/navigation"
-import { CallApi, CallApiWithAuth } from "@/config/axios.config"
+import { AckMessage, Conversation, CreateRoomRequest, CreateRoomResponse, Message, MessageRequest, MessageResponse, OnMessage, UserStatus } from "@/types/chat"
+import { CallApiWithAuth } from "@/config/axios.config"
 import { User } from "@/types/chat"
-import { set } from "react-hook-form"
+import useInitChat from "@/lib/hooks/use-init-chat"
+import ConversationItem from "./conversation-item"
+import { UserInfo } from "@/types/user"
+import { useRouter } from "next/router"
+
 
 export default function ImmersiveChatInterface() {
   // State
@@ -49,11 +51,12 @@ export default function ImmersiveChatInterface() {
     () => {
       const userData = localStorage.getItem(process.env.NEXT_PUBLIC_USER_KEY!);
       if (!userData) {
-        return { id: "", name: "", avatar: "", status: "offline" }; // Default values
+        useRouter().push("");
+        return { id: 0, name: "", avatar: "", status: "offline" }; // Default values
       }
-      const parsedUser = JSON.parse(userData);
+      const parsedUser = JSON.parse(userData) as UserInfo;
       return {
-        id: parsedUser.user_id || "",
+        id: parsedUser.user_id,
         name: parsedUser.user_nickname || "",
         avatar: parsedUser.user_avatar || "/placeholder.svg?height=40&width=40",
         status: "online",
@@ -91,80 +94,9 @@ export default function ImmersiveChatInterface() {
 
   const { toast } = useToast()
   const isMobile = useMediaQuery("(max-width: 768px)")
-  const router = useRouter()
  
-  const ws = useRef<WebSocket | null>(null)
+  const ws = useRef<WebSocket>(null)
 
-  // Initialize chat page vả
-  useEffect(() => {
-    const fetchInitData = async () => {
-      try {
-      const response = await CallApiWithAuth.get("/chat/init")
-        const data = response.data.data
-        const user = data.user 
-        const conversationsData = data.rooms || []
-        const wsUrl = data.socket_url
-
-        // currentUser
-        const currentUser: User = {
-          id: user.user_id,
-          name: user.user_nickname,
-          avatar: user.user_avatar || "/placeholder.svg?height=40&width=40",
-          status: user.status || "offline",
-        }
-        setCurrentUser(currentUser)
-        // conversations
-        const formattedConversations: Conversation[] = conversationsData?.map((room: any) => {
-          return {
-            id: room.room.RoomID,
-            user: {
-              id: room.info.user_id,
-              name: room.info.user_name,
-              avatar: room.info.user_avatar || "/placeholder.svg?height=48&width=48",
-              status: room.info.status || "offline",
-            } as User,
-            messages: [] as Message[],
-            lastMessage: {
-              id: room.room.MessageID ? room.room.MessageID : `msg-${Date.now()}`,
-              content: room.room.MessageContent, 
-              sender: room.room.MessageReceiverID === user.user_id ? currentUser : {
-                id: room.info.user_id,
-                name: room.info.user_nickname,
-                avatar: room.info.user_avatar || "/placeholder.svg?height=48&width=48",
-                status: room.info.status || "offline",
-              } as User,
-              timestamp: new Date(room.room.MessageSentAt),
-              status: room.room.MessageIsRead.Bool ? "read" : "delivered",
-            } as Message,
-            unreadCount: (!room.room.MessageIsRead.Bool && room.room.MessageReceiverID == user.user_id) ? 1 : 0,
-            isGroup: room.room.RoomIsGroup,
-          } as Conversation
-        }) || [] 
-
-
-        setConversations(prev => [...formattedConversations])
-
-        // connect to WebSocket
-        connectWebSocket(wsUrl)
-
-      } catch (error) {
-        console.error("Error fetching initial chat data:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load chat data. Please try again later.",
-          variant: "destructive",
-        })
-      }
-    }
-    fetchInitData() 
-    
-    return () => {
-      ws.current?.close()
-    }
-
-  }, [])
-
-  
   useEffect(() => {
     conversationListRef.current = conversations
     acctiveConversationRef.current = activeConversation
@@ -173,9 +105,34 @@ export default function ImmersiveChatInterface() {
 
   useEffect(() => setIsTyping(false), [activeConversation])
 
-  const handleReceiveMessage = (data: MessageRequest) => {
+  // Close sidebar on mobile when conversation is selected
+  useEffect(() => {
+    if (isMobile) {
+      setIsSidebarOpen(false)
+    }
+  }, [activeConversation, isMobile])
+
+  // Auto-open sidebar on desktop
+  useEffect(() => {
+    if (!isMobile) {
+      setIsSidebarOpen(true)
+    }
+  }, [isMobile])
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    scrollToBottom()
+
+    const lastMessage = messages[messages.length - 1]
+    if(lastMessage?.sender.id != currentUser.id && lastMessage?.status === "delivered" || lastMessage?.status === "sent") {
+      handleSendReadStatus(acctiveConversationRef.current as Conversation)
+    }
+  }, [messages])
+
+
+   const handleReceiveMessage = (data: MessageRequest) => {
     // Check if the conversation exists
-    const conversation = conversationListRef.current.find((c) => c.id === data.room_id)
+    const conversation = conversationListRef.current.find((c) => c.id == data.room_id)
 
     // create a new conversation if it doesn't exist   
     if (!conversation) {
@@ -192,7 +149,7 @@ export default function ImmersiveChatInterface() {
         } as User,
         messages: [] as Message[],
         lastMessage: {
-          id: String(data.id),
+          id: data.id,
           content: data.content,
           sender: {
             id: data.sender_id,
@@ -209,6 +166,10 @@ export default function ImmersiveChatInterface() {
 
       // Add the new conversation to the state
       setConversations((prev) => [newConversation, ...prev])
+      handleSendSubscribeTo([data.sender_id])
+      handleSendChangeStatus({
+        status: "online",
+      })
       return
     }
 
@@ -216,7 +177,7 @@ export default function ImmersiveChatInterface() {
     if (acctiveConversationRef.current?.user.id === data.sender_id && acctiveConversationRef.current?.isTemporary) {
       // Update the active conversation with the new message 
       const newMessage: Message = {
-          id: String(data.id),
+          id: data.id,
           content: data.content,
           sender: {
             id: data.sender_id,
@@ -228,7 +189,20 @@ export default function ImmersiveChatInterface() {
           status: "read",
         };
 
-        
+        setConversations((prev) => {
+          return prev.map((c) => {
+            if (c.id === data.room_id) {
+              return {
+                ...c,
+                id: data.room_id,
+                lastMessage: newMessage,
+                unreadCount: 0, // Reset unread count when sending a message
+              }
+            }
+            return c
+          })
+        })
+
         setActiveConversation((prev) => {
           if (!prev || !prev.user) {
             return null; // Ensure the previous state and user exist
@@ -252,6 +226,8 @@ export default function ImmersiveChatInterface() {
       // update message status
       CallApiWithAuth.post(`/chat/set-status`, payload)
 
+      handleSendSubscribeTo([data.sender_id])
+
       return 
     }
     // If conversation exists, update it with the new message
@@ -259,7 +235,7 @@ export default function ImmersiveChatInterface() {
     if (acctiveConversationRef.current?.id === conversation.id) {
       // Add the new message to the active conversation
         const newMessage: Message = {
-          id: String(data.id),
+          id: data.id,
           content: data.content,
           sender: {
             id: data.sender_id,
@@ -271,6 +247,20 @@ export default function ImmersiveChatInterface() {
           status: "delivered",
         }
 
+      setConversations((prev) => {
+        return prev.map((c) => {
+          if (c.id === conversation.id) {
+            return {
+              ...c,
+              lastMessage: newMessage,
+              unreadCount: 0, // Reset unread count when sending a message
+            }
+          }
+          return c
+        })
+      })
+
+      
       setActiveConversation((prev) => {
         if (!prev) return null // Ensure previous state exists
 
@@ -301,7 +291,7 @@ export default function ImmersiveChatInterface() {
               ...c,
               unreadCount: c.unreadCount + 1,
               lastMessage: {
-                id: String(data.id),
+                id: data.id,
                 content: data.content,
                 sender: {
                   id: data.sender_id,
@@ -318,60 +308,16 @@ export default function ImmersiveChatInterface() {
     )
   }
 
-  const connectWebSocket = (urlInit: string) => {
-    const token = localStorage.getItem(process.env.NEXT_PUBLIC_SESSION_KEY!)
-    if (!token) {
-      console.error("No session token found")
-      return
-    }
-    
-    const webSocket = new WebSocket(urlInit + token)
-    ws.current = webSocket
-
-    webSocket.onopen = () => {
-      console.log("WebSocket connection established")
-    }
-
-    webSocket.onmessage = (e) => {
-      const data = JSON.parse(e.data)
-
-      if (data.event == "message") {
-        handleReceiveMessage(data as MessageRequest)
-      }
-      else if (data.event == "ack") {
-        const newAckMessage = {
-          event: "ack",
-          receiver_id: data.receiver_id,
-          status: data.status,
-          content: JSON.parse(atob(data.content)) as MessageRequest,
-          message_id: data.message_id,
-        } as AckMessage
-        handleReceiverAckMessage(newAckMessage)
-      }
-      else if (data.event == "typing") {
-        handleReceiveTyping(data as MessageRequest)
-      } else if (data.event == "read") { 
-        handleReceiveReadStatus(data as MessageRequest)
-      }
-    }
-
-    webSocket.onclose = () => {
-      console.log("WebSocket connection closed, reconnecting...")
-      setTimeout(() => connectWebSocket(urlInit), 5000) // Reconnect after 5 seconds
-    }
-
-  }
-
   // Handle ack 
   const handleReceiverAckMessage = (data: AckMessage) => {
     if(!data || data.content.event !== "message") return
-    const message = data.content
+    const message = data.content.message as MessageRequest
     if(data.status === "success") {
       setTimeout(() => {
         if(message.room_id === acctiveConversationRef.current?.id) {
           setMessages((prev) =>
               prev.map((msg) => {
-                if (msg.id === "0") {
+                if (msg.id === 0) {
                   return {
                     ...msg,
                     id: data.message_id,
@@ -391,38 +337,34 @@ export default function ImmersiveChatInterface() {
         variant: "destructive",
       })
       // delete the message from the state
-      setMessages((prev) => prev.filter((msg) => msg.id !== data.message_id))
+      setMessages((prev) =>
+        prev.filter((msg) => msg.id !== 0)
+      )
     }
   }
 
-  // Close sidebar on mobile when conversation is selected
-  useEffect(() => {
-    if (isMobile) {
-      setIsSidebarOpen(false)
-    }
-  }, [activeConversation, isMobile])
-
-  // Auto-open sidebar on desktop
-  useEffect(() => {
-    if (!isMobile) {
-      setIsSidebarOpen(true)
-    }
-  }, [isMobile])
-
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    scrollToBottom()
-
-    const lastMessage = messages[messages.length - 1]
-    if(lastMessage?.sender.id != currentUser.id && lastMessage?.status === "delivered") {
-      handleSendReadStatus(acctiveConversationRef.current as Conversation)
-    }
-  }, [messages])
-
-  const handleReceiveReadStatus = (data: MessageRequest) => {
-    if (!data || !data.room_id || !data.sender_id) return
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const handleReceiveTyping = (data: OnMessage) => {
+    if (!data || !data.typing?.room_id || !data.sender_id) return
     // Check if the conversation is active
-    if (acctiveConversationRef.current?.id === data.room_id) {
+    if (acctiveConversationRef.current?.id === data.typing.room_id) {
+      setIsTyping(true)
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsTyping(false)
+      }, 3000)
+      
+    }
+  }
+
+  const handleReceiveReadStatus = (data: OnMessage) => {
+    if (!data || !data.read?.room_id || !data.sender_id) return
+    // Check if the conversation is active
+    if (acctiveConversationRef.current?.id === data.read.room_id) {
       setMessages((prev) =>
         prev.map((msg) => {
           if (msg.sender.id === currentUser.id && msg.status === "delivered") {
@@ -437,22 +379,61 @@ export default function ImmersiveChatInterface() {
     }
   }
 
+  const handleReceiveUserStatus = (data: OnMessage) => {
+    if (!data) return
+    
+    setConversations((prev) =>
+      prev.map((c) => {
+        if (c.user.id == data.sender_id) {
+          return {
+            ...c,
+            user: {
+              ...c.user,
+              status: data.status?.status as UserStatus["status"],
+            },
+          }
+        }
+        return c
+      }))
+      if (acctiveConversationRef.current?.user.id === data.sender_id) {
+        setActiveConversation((prev) => {
+          if (!prev) return null // Ensure previous state exists
+          return {
+            ...prev,
+            user: {
+              ...prev.user,
+              status: data.status?.status as UserStatus["status"],
+            },
+          }
+        })
+      }
+  }
+
+  // Initialize chat page vả
+  useInitChat({
+    wsRef: ws,
+    setCurrentUser,
+    setConversations,
+    onReceiveMessage: handleReceiveMessage,
+    onReceiveAck: handleReceiverAckMessage,
+    onTyping: handleReceiveTyping,
+    onRead: handleReceiveReadStatus,
+    onStatusUpdate: handleReceiveUserStatus,
+    toast,
+  })
+
   const handleSendReadStatus = async (conversation: Conversation) => {
     if (!conversation) return
-    if(!ws.current || ws.current.readyState !== WebSocket.OPEN || !currentUser) return
+    if(!ws.current || ws.current.readyState !== WebSocket.OPEN) return
 
-    const msgRequest: MessageRequest  = {
-      id: Number(conversation.lastMessage?.id) || 0,
-      room_id: conversation.id,
+    const msgRequest: OnMessage = {
+      event: "read",
       sender_id: currentUser.id,
-      sender_name: currentUser.name,
-      sender_avatar: currentUser.avatar,
       receiver_id: conversation.user.id,
       type: conversation.isGroup ? "group" : "single",
-      content: "",
-      content_type: "text",
-      event: "read",
-      send_at: new Date().toISOString(),
+      read: {
+        room_id: conversation.id,
+      },
     }
 
     ws.current.send(JSON.stringify(msgRequest))
@@ -472,10 +453,9 @@ export default function ImmersiveChatInterface() {
       // 1 - 1
       try {
         const response = await CallApiWithAuth.get(`/chat/get-messages/${conversation.id}`)
-        const data = response.data.data.messages 
-
-
-        const messages: Message[] = data.map((msg: any) => ({
+        const data = response.data.data.messages_direct as MessageResponse[]
+        console.log("Fetched messages:", data)
+        const messages: Message[] = data.map((msg: MessageResponse) => ({
           id: msg.MessageID,
           content: msg.MessageContent,
           sender: currentUser?.id == msg.MessageReceiverID ? {
@@ -491,7 +471,7 @@ export default function ImmersiveChatInterface() {
         // Update conversation with fetched messages
         const newConversation: Conversation = {
           ...conversation,
-          messages: messages.reverse(),
+          messages: messages.reverse(), 
           unreadCount: 0, // cập nhật lại nếu cần
         }
         // check unread count
@@ -540,18 +520,19 @@ export default function ImmersiveChatInterface() {
       return
     }
 
-    // remove temporary conversation
-    setConversations(prev =>
-      prev.filter(c => !c.isTemporary || c.id === newConversation.id)
-    );
-
     if (existingConversation) {
       handleConversationChange(existingConversation)
+      setIsUserDiscoveryOpen(false)
       return
+    } else {
+      // remove temporary conversation
+      setConversations(prev =>
+        prev.filter(c => !c.isTemporary || c.id === newConversation.id)
+      );
     }
     // Create a temporary conversation
     const newConversation: Conversation = {
-      id: `temp-${Date.now()}`,
+      id: Date.now(), 
       user: {
         id: user.id,
         name: user.name,
@@ -566,7 +547,7 @@ export default function ImmersiveChatInterface() {
 
     // Add new conversation to state
     setActiveConversation(newConversation)
-    setMessages(newConversation.messages)
+    setMessages([])
     setConversations((prev) => [newConversation, ...prev])
 
     // Close panels
@@ -586,22 +567,34 @@ export default function ImmersiveChatInterface() {
     }
   }
 
-  const handleDataRoom = () => {
-    var room: any = {}
-    if (activeConversation?.isGroup) {
-      // Handle group conversation
-      room["room_name"] = activeConversation.user.name + " - " + currentUser?.name
-      room["room_create_by"] = currentUser?.id
-      room["room_is_group"] = true
-      room["room_members"] = [currentUser?.id, ...activeConversation.user.id]
-      return room
+  const handleDataRoom = useCallback((): CreateRoomRequest => {
+  if (!activeConversation || !currentUser) return {
+    room_name: "",
+    room_create_by: 0,
+    room_is_group: false,
+    room_members: [],
+  }
+
+  return {
+    room_name: activeConversation.user.name + " - " + currentUser.name,
+    room_create_by: currentUser.id,
+    room_is_group: activeConversation.isGroup || false,
+    room_members: [activeConversation.user.id, currentUser.id],
+  }
+}, [activeConversation, currentUser])
+
+
+  const handleSendChangeStatus = (s: UserStatus) => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !activeConversation || !currentUser) return
+
+    const statusMessage: OnMessage = {
+      event: "status",
+      sender_id: currentUser.id,
+      receiver_ids: [conversations.map(c => c.user.id)].flat(),
+      status: s,
     }
-    // Handle single conversation
-    room["room_name"] = activeConversation?.user.name + " - " + currentUser?.name
-    room["room_create_by"] = currentUser?.id
-    room["room_is_group"] = false
-    room["room_members"] = [currentUser?.id, activeConversation?.user.id]
-    return room
+
+    ws.current.send(JSON.stringify(statusMessage))
   }
 
   // Handle sending a message
@@ -609,21 +602,35 @@ export default function ImmersiveChatInterface() {
     e.preventDefault()
     if (!message.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN || !activeConversation || !currentUser) return
 
-    let roomId = activeConversation.id
+    let roomId = acctiveConversationRef.current?.id || activeConversation.id
 
-    if (activeConversation.isTemporary) {
+    if (acctiveConversationRef.current?.isTemporary) {
       try {
         const room = handleDataRoom()
         const response = await CallApiWithAuth.post("/chat/create-room", room)
-        const data = response.data.data
+        const data = response.data.data as CreateRoomResponse
         roomId = data.room_id
 
+        setConversations((prev) => {
+          return prev.map((c) => {
+            if (c.id === acctiveConversationRef.current?.id) {
+              return {
+                ...c,
+                id: data.room_id,
+                isTemporary: false,
+                isGroup: data.room_is_group,
+              }
+            }
+            return c
+          })
+        })
         setActiveConversation((prev) => prev ? ({
           ...prev,
           id: data.room_id,
           isTemporary: false,
           isGroup: data.room_is_group,
         }) : null)
+        handleSendSubscribeTo([acctiveConversationRef.current?.user.id || activeConversation.user.id])
       } catch (error) {
         console.error("Error creating conversation:", error)
         toast({
@@ -636,18 +643,21 @@ export default function ImmersiveChatInterface() {
     }
 
     const currentTime = new Date()
-    const msg: MessageRequest = {
-      id: 0,
-      room_id: roomId,
-      sender_id: currentUser.id,
-      sender_name: currentUser.name,
-      sender_avatar: currentUser.avatar,
-      receiver_id: acctiveConversationRef.current?.user.id || activeConversation.user.id,
-      type: acctiveConversationRef.current?.isGroup ? "group" : "single",
-      content: message,
-      content_type: "text",
+    const msg: OnMessage = {
       event: "message",
-      send_at: currentTime.toISOString(),
+      sender_id: currentUser.id,
+      receiver_id: activeConversation.user.id,
+      type: activeConversation.isGroup ? "group" : "single",
+      message: {
+        id: 0, // Temporary ID, will be replaced by server
+        room_id: roomId,
+        sender_id: currentUser.id,
+        sender_name: currentUser.name,
+        sender_avatar: currentUser.avatar || "/placeholder.svg?height=48&width=48",
+        content: message,
+        content_type: "text",
+        send_at: currentTime.toISOString(),
+      } as MessageRequest,
     }
 
     try {
@@ -661,18 +671,44 @@ export default function ImmersiveChatInterface() {
       })
     }
 
+    const newMessage: Message = {
+      id: 0, // Temporary ID, will be replaced by server
+      content: message,
+      sender: currentUser,
+      timestamp: currentTime,
+      status: "sent", // Initial status before ack
+    }
+
     setMessages((prev) => [
       ...prev,
-      {
-        id: "0",
-        content: message,
-        sender: currentUser,
-        timestamp: currentTime,
-        status: "sent",
-      }
+      newMessage
     ])
 
+    setConversations((prev) => {
+      return prev.map((c) => {
+        if (c.id === roomId) {
+          return {
+            ...c,
+            lastMessage: newMessage,
+            unreadCount: 0, // Reset unread count when sending a message
+          }
+        }
+        return c
+      })
+    })
+
     setMessage("")
+  }
+
+  const handleSendSubscribeTo = (receiver_ids: number[]) => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !activeConversation || !currentUser) return
+    const subscribeMessage: OnMessage = {
+      event: "subscribe",
+      sender_id: currentUser.id,
+      receiver_ids: receiver_ids,
+    }
+
+    ws.current.send(JSON.stringify(subscribeMessage))
   }
 
 
@@ -687,39 +723,17 @@ export default function ImmersiveChatInterface() {
 
     lastSendTypingTimeRef.current = currentTime
 
-    const typingMessage: MessageRequest = {
-      id: 0,
-      room_id: activeConversation.id,
-      sender_id: currentUser.id,
-      sender_name: currentUser.name,
-      sender_avatar: currentUser.avatar,
-      receiver_id: acctiveConversationRef.current?.user.id || activeConversation.user.id,
-      type: acctiveConversationRef.current?.isGroup ? "group" : "single",
-      content: "",
-      content_type: "text",
+    const typingMessage: OnMessage = {
       event: "typing",
-      send_at: new Date().toISOString(),
+      sender_id: currentUser.id,
+      type: "multi",
+      receiver_ids: [acctiveConversationRef.current?.user.id || activeConversation.user.id],
+      typing: {
+        room_id: acctiveConversationRef.current?.id || activeConversation.id,
+      }
     }
 
     ws.current.send(JSON.stringify(typingMessage))
-  }
-
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const handleReceiveTyping = (data: MessageRequest) => {
-    if (!data || !data.room_id || !data.sender_id) return
-    // Check if the conversation is active
-    if (acctiveConversationRef.current?.id === data.room_id) {
-      setIsTyping(true)
-
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
-      }
-
-      typingTimeoutRef.current = setTimeout(() => {
-        setIsTyping(false)
-      }, 3000)
-      
-    }
   }
 
   // Handle sending an emote
@@ -727,7 +741,7 @@ export default function ImmersiveChatInterface() {
     if (!emote) return
     // Create new message with emote
     const newMessage = {
-      id: `msg-${Date.now()}`,
+      id: Date.now(),
       content: emote,
       sender: currentUser,
       timestamp: new Date(),
@@ -744,7 +758,7 @@ export default function ImmersiveChatInterface() {
     setTimeout(() => {
       // Create reply message
       const replyMessage = {
-        id: `msg-${Date.now()}`,
+        id: Date.now() + 1, // Ensure unique ID
         content: getRandomEmote(),
         sender: activeConversation?.user || currentUser,
         timestamp: new Date(),
@@ -1290,62 +1304,5 @@ export default function ImmersiveChatInterface() {
         </div>
       </div>
     </TooltipProvider>
-  )
-}
-
-// Conversation item component
-function ConversationItem({ conversation, isActive, onClick }: { conversation: Conversation; isActive: boolean; onClick: () => void }) {
-  const { user, lastMessage, unreadCount } = conversation
-
-  return (
-    <div
-      onClick={onClick}
-      className={`p-2 rounded-[6px] cursor-pointer transition-colors ${
-        isActive ? "bg-indigo-500/20" : "hover:bg-white/5"
-      }`}
-    >
-      <div className="flex items-start space-x-3 w-full">
-        {/* Avatar + status */}
-        <div className="relative shrink-0">
-          <Avatar className="h-12 w-12">
-            <img src={user.avatar || "/placeholder.svg?height=48&width=48"} alt={user.name} />
-          </Avatar>
-          <span
-            className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1b26] ${
-              user.status === "online" ? "bg-green-500" : user.status === "away" ? "bg-yellow-500" : "bg-gray-500"
-            }`}
-          ></span>
-        </div>
-
-        {/* Text content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className={`text-sm font-medium truncate ${isActive ? "text-white" : "text-gray-300"}`}>
-              {user.name}
-            </h3>
-              <span className="text-xs text-gray-500 shrink-0">
-                {
-                  new Date(
-                    lastMessage?.timestamp ?? new Date().getTime()
-                  ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                }
-              </span>
-          </div>
-
-
-          {/* If unreadCount highlight text and change size */}
-          <p className={`text-sm text-gray-400 truncate ${
-            unreadCount > 0 ? "font-semibold text-white" : ""
-          }`}>
-            {lastMessage ? lastMessage.content : "No messages yet"}
-          </p>
-        </div>
-
-        {/* Unread badge */}
-        {unreadCount > 0 && (
-          <Badge className="ml-2 bg-indigo-600 hover:bg-indigo-700 shrink-0">{unreadCount}</Badge>
-        )}
-      </div>
-    </div>
   )
 }

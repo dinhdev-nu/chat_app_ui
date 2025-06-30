@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Avatar } from "@/components/ui/avatar"
 import { Search, UserPlus, X, Users } from "lucide-react"
 import { CallApiWithAuth } from "@/config/axios.config"
+import { UserInfo } from "@/types/user"
 
 
 type User = {
@@ -38,11 +39,13 @@ export default function UserDiscovery({ onClose, onAddFriend, onAddConversation 
     }
     const fetchData = async () => {
         try {
-          const response = await CallApiWithAuth.get("/user/search?username=")
-          const users: User[] = response.data.data?.map((user: any) => ({
+          const dataRaw = await CallApiWithAuth.get("/user/search?username=")
+          console.log("Initial fetch response:", dataRaw.data.data)
+          const res: UserInfo[] = dataRaw.data.data
+          const users: User[] = res.map((user: UserInfo) => ({
             id: user.user_id,
             name: user.user_nickname,
-            status: user.status || "offline",
+            status: user.user_status || "offline",
             avatar: user.user_avatar || "/placeholder.svg",
             mutualFriends: user.mutualFriends || 0,
           })) || [] 
@@ -64,10 +67,11 @@ export default function UserDiscovery({ onClose, onAddFriend, onAddConversation 
 
     try {
       const response = await CallApiWithAuth.get(`/user/search?username=${query}`)
+      console.log("Search response:", response.data.data)
       const users: User[] = response.data.data?.map((user: any) => ({
         id: user.user_id,
         name: user.user_nickname,
-        status: user.status || "offline",
+        status: user.user_status || "offline",
         avatar: user.user_avatar || "/placeholder.svg",
         mutualFriends: user.mutualFriends || 0,
       })) || []

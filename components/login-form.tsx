@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation"
 import { CallApi } from "@/config/axios.config"
 
 import { useToast } from "@/hooks/use-toast"
+import { LoginResponse } from "@/types/auth"
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
@@ -30,22 +31,21 @@ export default function LoginForm() {
 
     // Simulate API call
     try {
-      const res = await CallApi.post("/auth/login", {
+      const dataRaw = await CallApi.post("/auth/login", {
         email,
         password,
       })
-      res.data.user = {
-        "id": res.data.data.id,
-        "email": res.data.data.email,
-      }
+
+      const res = dataRaw.data.data as LoginResponse
+
       toast({
         title: "Login successful",
         description: "Welcome back! You are now logged in.",
         variant: "default",
       })
       // setLocalStorage
-      localStorage.setItem(process.env.NEXT_PUBLIC_SESSION_KEY!, res.data.data.token)
-      localStorage.setItem(process.env.NEXT_PUBLIC_USER_KEY!, JSON.stringify(res.data.data.user))
+      localStorage.setItem(process.env.NEXT_PUBLIC_SESSION_KEY!, res.token)
+      localStorage.setItem(process.env.NEXT_PUBLIC_USER_KEY!, JSON.stringify(res.user))
     
     } catch (error) {
       setError(true)

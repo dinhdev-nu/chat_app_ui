@@ -2,64 +2,104 @@
 
 import type React from "react"
 
-import { useState, useRef } from "react"
-import { Smile, Paperclip, Send, ImageIcon } from "lucide-react"
+import { useState } from "react"
+import { TooltipRoot, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
+import { Button } from "@/components/ui/button"
+import {
+  Smile,
+  PlusCircle,
+  Send,
+  ImageIcon,
+  Mic,
+} from "lucide-react"
 
 interface ChatInputProps {
-  onSendMessage: (content: string) => void
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => Promise<void>
+  onClick: () => void
+  onTyping: () => void
 }
 
-export default function ChatInput({ onSendMessage }: ChatInputProps) {
+export default function ChatInput({ 
+  
+ }: ChatInputProps) {
   const [message, setMessage] = useState("")
-  const inputRef = useRef<HTMLInputElement>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (message.trim()) {
-      onSendMessage(message)
-      setMessage("")
-
-      // Focus the input after sending
-      setTimeout(() => {
-        inputRef.current?.focus()
-      }, 0)
-    }
-  }
+  
 
   return (
     <div className="p-4 border-t border-white/10">
-      <form onSubmit={handleSubmit} className="flex items-center">
-        <div className="flex items-center bg-white/5 rounded-full px-4 py-2 flex-1">
-          <input
-            ref={inputRef}
-            type="text"
-            placeholder="Type your message..."
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            className="bg-transparent border-none outline-none text-white flex-1"
-          />
-          <div className="flex space-x-2">
-            <button type="button" className="text-gray-400 hover:text-indigo-400 transition-colors p-1">
-              <Smile className="h-5 w-5" />
-            </button>
-            <button type="button" className="text-gray-400 hover:text-indigo-400 transition-colors p-1">
-              <Paperclip className="h-5 w-5" />
-            </button>
-            <button type="button" className="text-gray-400 hover:text-indigo-400 transition-colors p-1">
-              <ImageIcon className="h-5 w-5" />
-            </button>
+      <form onSubmit={onSubmit} className="flex items-end gap-2">
+        <div className="flex-1 bg-[#1e1f2e] rounded-[6px] border border-white/10 overflow-hidden">
+          <div className="flex items-center px-3 py-2 border-b border-white/5">
+            <TooltipRoot>
+              <TooltipTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                  <PlusCircle className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Attach File</TooltipContent>
+            </TooltipRoot>
+
+            <TooltipRoot>
+              <TooltipTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                  <ImageIcon className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Send Image</TooltipContent>
+            </TooltipRoot>
+
+            <TooltipRoot>
+              <TooltipTrigger asChild>
+                <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-gray-400 hover:text-white">
+                  <Mic className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Voice Message</TooltipContent>
+            </TooltipRoot>
+
+            <TooltipRoot>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-gray-400 hover:text-white"
+                  onClick={() => {
+                    setIsEmotePanelOpen(!isEmotePanelOpen)
+                    setIsNotificationPanelOpen(false)
+                    setIsUserDiscoveryOpen(false)
+                  }}
+                >
+                  <Smile className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Emotes</TooltipContent>
+            </TooltipRoot>
           </div>
+
+          <textarea
+            value={message}
+            onChange={(e) => {
+              setMessage(e.target.value)
+              onTyping
+            }}
+            placeholder={`Message ${activeConversation.user.name}...`}
+            className="w-full bg-transparent border-none px-4 py-3 text-white placeholder-gray-500 focus:outline-none resize-none h-20"
+          />
         </div>
-        <button
+
+        <Button
           type="submit"
-          className={`ml-2 p-2 rounded-full ${
-            message.trim() ? "bg-purple-600 text-white" : "bg-purple-600/50 text-white/50 cursor-not-allowed"
-          }`}
           disabled={!message.trim()}
+          className={`rounded-full p-3 ${
+            message.trim() ? "bg-indigo-600 hover:bg-indigo-700"
+              : "bg-indigo-600/50 cursor-not-allowed"
+          }`}
         >
           <Send className="h-5 w-5" />
-        </button>
+        </Button>
       </form>
-    </div>
+    </div>                 
   )
 }
