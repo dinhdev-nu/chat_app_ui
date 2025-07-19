@@ -216,7 +216,7 @@ export interface GroupConversation extends BaseConversation {
     type: "group";
     participants: User[];
     description?: string;
-    cuurrentLastSeen: number;
+    currentLastSeen: number;
     createdBy: User;
     createdAt: Date;
 }

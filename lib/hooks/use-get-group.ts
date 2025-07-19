@@ -84,7 +84,7 @@ export default function useGetGroup({
                         participants: room.room_members,
                         createdBy: createdBy,
                         createdAt: new Date(room.room_created_at),
-                        cuurrentLastSeen: room.current_last_seen,
+                        currentLastSeen: room.current_last_seen,
                         settings: {
                             allowInvites: true,
                             muteNotifications: false,
