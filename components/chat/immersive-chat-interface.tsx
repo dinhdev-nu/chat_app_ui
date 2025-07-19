@@ -46,7 +46,6 @@ import { CallApiWithAuth } from "@/config/axios.config";
 import { User } from "@/types/chat";
 import useInitChat from "@/lib/hooks/use-init-chat";
 import { UserInfo } from "@/types/user";
-import { useRouter } from "next/router";
 import ChatSidebar from "./chat-sidebar";
 import GroupCreationModal from "./group-creation-modal";
 import useGetGroup from "@/lib/hooks/use-get-group";
@@ -57,14 +56,17 @@ import {
   mockNotificationsData,
   Notification
 } from "@/lib/mock-notifications-data";
+import { useRouter } from "next/navigation";
 
 export default function ImmersiveChatInterface() {
   // State
+  const router = useRouter();
+
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentUser, setCurrentUser] = useState<User>(() => {
     const userData = localStorage.getItem(process.env.NEXT_PUBLIC_USER_KEY!);
     if (!userData) {
-      useRouter().push("");
+      router.push("/login");
       return { id: 0, name: "", avatar: "", status: "offline" }; // Default values
     }
     const parsedUser = JSON.parse(userData) as UserInfo;
@@ -207,20 +209,21 @@ export default function ImmersiveChatInterface() {
         status: "read"
       };
 
-      setConversations((prev) => {
-        const conv = prev.find((c) => c.id === data.room_id);
-        if (!conv) return prev;
-        const updatedConv = {
-          ...conv,
-          id: data.room_id,
-          messages: [...(conv.messages || []), newMessage],
-          lastMessage: newMessage,
-          unreadCount: 0,
-          isTemporary: false
-        };
-
-        return [updatedConv, ...prev.filter((c) => c.id !== conv.id)];
-      });
+      setConversations((prev) => [
+        ...prev.map((c) => {
+          if (c.id === 0 && c.type === "private") {
+            return {
+              ...c,
+              id: data.room_id,
+              messages: [...(c.messages || []), newMessage],
+              lastMessage: newMessage,
+              unreadCount: 0,
+              isTemporary: false
+            };
+          }
+          return c;
+        })
+      ]);
 
       setActiveConversation((prev) => {
         if (!prev) {
@@ -234,7 +237,7 @@ export default function ImmersiveChatInterface() {
         } as PrivateConversation;
       });
 
-      setMessages((prevMessages) => [...prevMessages, newMessage]);
+      setMessages((prev) => [...prev, newMessage]);
 
       const payload = {
         room_id: data.room_id,
@@ -1019,7 +1022,7 @@ export default function ImmersiveChatInterface() {
           <div className="flex items-center">
             <div className="flex items-center">
               <MessageSquare className="h-6 w-6 text-indigo-500 mr-2" />
-              <h1 className="text-white font-medium text-lg">Chat Hub</h1>
+              <h1 className="text-white font-medium text-lg">CommuniHub</h1>
             </div>
           </div>
 
@@ -1393,7 +1396,7 @@ export default function ImmersiveChatInterface() {
                     type: "group",
                     createdBy: currentUser,
                     createdAt: new Date(),
-                    cuurrentLastSeen: 0 // Set to 0 or current timestamp
+                    currentLastSeen: 0 // Set to 0 or current timestamp
                   };
 
                   // send new group

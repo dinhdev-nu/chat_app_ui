@@ -1,295 +1,276 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useCallback, useMemo } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Users, ArrowRight, CheckCircle, ChevronLeft } from "lucide-react"
-import { FloatingParticles } from "@/components/floating-particles"
-import {CallApi} from "@/config/axios.config"
-import { isOTPValid } from "@/lib/utils"
+import { useState, useCallback, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Users, ArrowRight, CheckCircle, ChevronLeft } from "lucide-react";
+import { FloatingParticles } from "@/components/floating-particles";
+import { CallApi } from "@/config/axios.config";
+import { isOTPValid } from "@/lib/utils";
 
-import { useToast } from "@/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast";
 
-type RegistrationStep = "email" | "otp" | "details" | "password" | "success"
+type RegistrationStep = "email" | "otp" | "details" | "password" | "success";
 
 export default function RegistrationForm() {
-  const router = useRouter()
-  const [currentStep, setCurrentStep] = useState<RegistrationStep>("email")
-  const [isLoading, setIsLoading] = useState(false)
-  const [email, setEmail] = useState("")
-  const [otp, setOtp] = useState(["", "", "", "", "", ""])
-  const [password, setPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [error, setError] = useState("")
-  const [displayName, setDisplayName] = useState("")
-  const [loginName, setLoginName] = useState("")
-  const [dateOfBirth, setDateOfBirth] = useState("")
-  const [birthDay, setBirthDay] = useState("")
-  const [birthMonth, setBirthMonth] = useState("")
-  const [birthYear, setBirthYear] = useState("")
-  const [isResending, setIsResending] = useState(false)
+  const router = useRouter();
+  const [currentStep, setCurrentStep] = useState<RegistrationStep>("email");
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [loginName, setLoginName] = useState("");
+  const [birthDay, setBirthDay] = useState("");
+  const [birthMonth, setBirthMonth] = useState("");
+  const [birthYear, setBirthYear] = useState("");
+  const [isResending, setIsResending] = useState(false);
 
-  const { toast} = useToast()
+  const { toast } = useToast();
 
   // Memoize handlers to prevent recreation on each render
   const handleOtpChange = useCallback(
     (index: number, value: string) => {
       if (value.length > 1) {
-        value = value.slice(0, 1)
+        value = value.slice(0, 1);
       }
 
-      const newOtp = [...otp]
-      newOtp[index] = value
-      setOtp(newOtp)
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
 
       // Auto-focus next input
       if (value && index < 5) {
-        const nextInput = document.getElementById(`otp-${index + 1}`)
+        const nextInput = document.getElementById(`otp-${index + 1}`);
         if (nextInput) {
-          nextInput.focus()
+          nextInput.focus();
         }
       }
     },
-    [otp],
-  )
+    [otp]
+  );
 
   const handleOtpKeyDown = useCallback(
     (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === "Backspace" && !otp[index] && index > 0) {
-        const prevInput = document.getElementById(`otp-${index - 1}`)
+        const prevInput = document.getElementById(`otp-${index - 1}`);
         if (prevInput) {
-          prevInput.focus()
+          prevInput.focus();
         }
       }
     },
-    [otp],
-  )
+    [otp]
+  );
 
-  const handleEmailSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setIsLoading(true)
+  const handleEmailSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setError("");
+      setIsLoading(true);
 
-    // API call to check email and send OTP
-    try {
-      if (!email) {
-        setError("Email is required")
+      // API call to check email and send OTP
+      try {
+        if (!email) {
+          setError("Email is required");
+          toast({
+            title: "Email Required",
+            description: "Please enter a valid email address.",
+            variant: "warning"
+          });
+          setIsLoading(false);
+          return;
+        }
+
+        await CallApi.post("/auth/register", { email });
+        setCurrentStep("otp");
+
+        CallApi.post("/auth/send-otp", { email });
         toast({
-          title: "Email Required",
-          description: "Please enter a valid email address.",
-          variant: "warning",
-        })
-        setIsLoading(false)
-        return
+          title: "Registration Successful",
+          description: "A 6-digit code has been sent to your email.",
+          variant: "info"
+        });
+      } catch (error) {
+        toast({
+          title: "Registration Failed",
+          description:
+            "An error occurred while sending the OTP. Please try again.",
+          variant: "destructive"
+        });
+        setError("Something went wrong. Please try again.");
       }
 
-      await CallApi.post("/auth/register", { email })
-      setCurrentStep("otp")
-
-      CallApi.post("/auth/send-otp", { email })
-      toast({
-        title: "Registration Successful",
-        description: "A 6-digit code has been sent to your email.",
-        variant: "info",
-      })
-      
-    } catch (error) {
-      toast({
-        title: "Registration Failed",
-        description: "An error occurred while sending the OTP. Please try again.",
-        variant: "destructive",
-      })
-      setError("Something went wrong. Please try again.")
-    }
-    
-    
-    setIsLoading(false)
-
-  }, [email, toast])
+      setIsLoading(false);
+    },
+    [email, toast]
+  );
 
   const handleOtpSubmit = useCallback(
     async (e: React.FormEvent) => {
-      e.preventDefault()
-      setError("")
+      e.preventDefault();
+      setError("");
 
-      const otpValue = otp.join("")
+      const otpValue = otp.join("");
       if (!isOTPValid(otpValue)) {
-        setError("Please enter a valid 6-digit code")
+        setError("Please enter a valid 6-digit code");
 
         toast({
           title: "Invalid OTP",
           description: "Please enter a valid 6-digit code.",
-          variant: "warning",
-        })
+          variant: "warning"
+        });
 
-        return
+        return;
       }
-      setIsLoading(true)
+      setIsLoading(true);
 
       // API call to verify OTP
       try {
         if (!email) {
-        setError("Email is required")
-        setIsLoading(false)
-        return
+          setError("Email is required");
+          setIsLoading(false);
+          return;
         }
-        await CallApi.post("/auth/verify-otp", { email, otp: otpValue })
+        await CallApi.post("/auth/verify-otp", { email, otp: otpValue });
 
         toast({
           title: "OTP Verified",
           description: "Your OTP has been verified successfully.",
-          variant: "success",
-        })
+          variant: "success"
+        });
 
-        setCurrentStep("details")
+        setCurrentStep("details");
       } catch (err) {
-        setError("Invalid OTP. Please try again.")
+        setError("Invalid OTP. Please try again.");
         toast({
           title: "Invalid OTP",
           description: "The OTP you entered is incorrect. Please try again.",
-          variant: "destructive",
-        })
-        setOtp(["", "", "", "", "", ""])
+          variant: "destructive"
+        });
+        setOtp(["", "", "", "", "", ""]);
       }
 
-      setIsLoading(false)
+      setIsLoading(false);
     },
-    [otp, toast],
-  )
+    [otp, toast]
+  );
 
   const handlePasswordSubmit = useCallback(
     async (e: React.FormEvent) => {
-      e.preventDefault()
-      setError("")
+      e.preventDefault();
+      setError("");
 
       if (password.length < 8) {
-        setError("Password must be at least 8 characters long")
-        return
+        setError("Password must be at least 8 characters long");
+        return;
       }
 
       if (password !== confirmPassword) {
-        setError("Passwords do not match")
-        return
+        setError("Passwords do not match");
+        return;
       }
       if (!email) {
-        setError("Email is required")
-        setIsLoading(false)
-        return
+        setError("Email is required");
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(true)
+      setIsLoading(true);
 
       // Simulate API call to create account
       try {
-        
         await CallApi.post("/auth/sign-up", {
-          email, 
-          password,
-        })
+          email,
+          password
+        });
 
         toast({
           title: "Account Created",
           description: "Your account has been created successfully.",
-          variant: "success",
-        })
+          variant: "success"
+        });
 
-        setCurrentStep("success")
+        setCurrentStep("success");
       } catch (error) {
         toast({
           title: "Account Creation Failed",
-          description: "An error occurred while creating your account. Please try again.",
-          variant: "destructive",
-        })
-        setError("Something went wrong. Please try again.")
+          description:
+            "An error occurred while creating your account. Please try again.",
+          variant: "destructive"
+        });
+        setError("Something went wrong. Please try again.");
       }
-      setIsLoading(false)
-      
-        // Redirect to home after success
+      setIsLoading(false);
+
+      // Redirect to home after success
       setTimeout(() => {
-        router.push("/")
-      }, 3000)
+        router.push("/");
+      }, 3000);
     },
-    [password, confirmPassword, router, email, toast],
-  )
+    [password, confirmPassword, router, email, toast]
+  );
 
   const handleDetailsSubmit = useCallback(
     (e: React.FormEvent) => {
-      e.preventDefault()
-      setError("")
+      e.preventDefault();
+      setError("");
 
-      if (!displayName.trim() || displayName.length < 3) {
-        setError("Display name is required")
-        return
-      }
-
-      if (!loginName.trim() || loginName.length < 5) {
-        setError("Login name is required")
-        return
-      }
-
-      if (!birthDay || !birthMonth || !birthYear) {
-        setError("Please complete your date of birth")
-        return
-      }
-
-      // Combine the date parts into a single date string
-      const formattedDate = `${birthYear}-${birthMonth}-${birthDay}`
-      setDateOfBirth(formattedDate)
-
-      setIsLoading(true)
+      setIsLoading(true);
 
       // Simulate API call to save user details
       setTimeout(() => {
-        setIsLoading(false)
+        setIsLoading(false);
         toast({
           title: "Details Saved",
           description: "Your profile details have been saved successfully.",
-          variant: "success",
-        })
-        setCurrentStep("password")
-      }, 1500)
+          variant: "success"
+        });
+        setCurrentStep("password");
+      }, 1500);
     },
-    [displayName, loginName, birthDay, birthMonth, birthYear, toast],
-  )
+    [displayName, loginName, birthDay, birthMonth, birthYear, toast]
+  );
 
   const handleOnclickResendOtp = useCallback(async () => {
     if (!email) {
-      setError("Email is required to resend OTP.")
-      return
+      setError("Email is required to resend OTP.");
+      return;
     }
 
-    setIsResending(true)
+    setIsResending(true);
     try {
-      await CallApi.delete("/auth/del-otp", { data: { email } })
-      await CallApi.post("/auth/send-otp", { email })
+      await CallApi.delete("/auth/del-otp", { data: { email } });
+      await CallApi.post("/auth/send-otp", { email });
     } catch (error) {
-      setError("Something went wrong. Please try again.")
+      setError("Something went wrong. Please try again.");
     } finally {
-      setIsResending(false)
+      setIsResending(false);
     }
-  }, [email])
+  }, [email]);
 
   // Memoize progress calculation
   const getProgress = useMemo(() => {
     switch (currentStep) {
       case "email":
-        return 20
+        return 20;
       case "otp":
-        return 40
+        return 40;
       case "details":
-        return 60
+        return 60;
       case "password":
-        return 80
+        return 80;
       case "success":
-        return 100
+        return 100;
       default:
-        return 0
+        return 0;
     }
-  }, [currentStep])
+  }, [currentStep]);
 
   // Memoize step indicators to prevent recreation on each render
   const stepIndicators = useMemo(
@@ -301,11 +282,11 @@ export default function RegistrationForm() {
               currentStep === "email"
                 ? "bg-indigo-500 text-white"
                 : currentStep === "otp" ||
-                    currentStep === "details" ||
-                    currentStep === "password" ||
-                    currentStep === "success"
-                  ? "bg-indigo-500/20 text-indigo-300"
-                  : "bg-white/10 text-gray-400"
+                  currentStep === "details" ||
+                  currentStep === "password" ||
+                  currentStep === "success"
+                ? "bg-indigo-500/20 text-indigo-300"
+                : "bg-white/10 text-gray-400"
             }`}
           >
             1
@@ -317,9 +298,11 @@ export default function RegistrationForm() {
             className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${
               currentStep === "otp"
                 ? "bg-indigo-500 text-white"
-                : currentStep === "details" || currentStep === "password" || currentStep === "success"
-                  ? "bg-indigo-500/20 text-indigo-300"
-                  : "bg-white/10 text-gray-400"
+                : currentStep === "details" ||
+                  currentStep === "password" ||
+                  currentStep === "success"
+                ? "bg-indigo-500/20 text-indigo-300"
+                : "bg-white/10 text-gray-400"
             }`}
           >
             2
@@ -332,8 +315,8 @@ export default function RegistrationForm() {
               currentStep === "details"
                 ? "bg-indigo-500 text-white"
                 : currentStep === "password" || currentStep === "success"
-                  ? "bg-indigo-500/20 text-indigo-300"
-                  : "bg-white/10 text-gray-400"
+                ? "bg-indigo-500/20 text-indigo-300"
+                : "bg-white/10 text-gray-400"
             }`}
           >
             3
@@ -346,8 +329,8 @@ export default function RegistrationForm() {
               currentStep === "password"
                 ? "bg-indigo-500 text-white"
                 : currentStep === "success"
-                  ? "bg-indigo-500/20 text-indigo-300"
-                  : "bg-white/10 text-gray-400"
+                ? "bg-indigo-500/20 text-indigo-300"
+                : "bg-white/10 text-gray-400"
             }`}
           >
             4
@@ -356,8 +339,8 @@ export default function RegistrationForm() {
         </div>
       </div>
     ),
-    [currentStep],
-  )
+    [currentStep]
+  );
 
   return (
     <div className="relative">
@@ -376,7 +359,7 @@ export default function RegistrationForm() {
         <div className="p-3 border-b border-white/10 flex items-center justify-center">
           <Link href="/" className="flex items-center space-x-2">
             <Users className="w-6 h-6 text-indigo-500" />
-            <span className="text-white font-medium">HarmonyHub</span>
+            <span className="text-white text-lg font-medium">CommuniHub</span>
           </Link>
           <span className="mx-2 text-gray-500">|</span>
           <h1 className="text-lg font-medium text-white">Create Account</h1>
@@ -408,12 +391,19 @@ export default function RegistrationForm() {
               >
                 <form onSubmit={handleEmailSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <h2 className="text-xl font-semibold text-white">Get started</h2>
-                    <p className="text-sm text-gray-400">Enter your email to create an account</p>
+                    <h2 className="text-xl font-semibold text-white">
+                      Get started
+                    </h2>
+                    <p className="text-sm text-gray-400">
+                      Enter your email to create an account
+                    </p>
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium text-gray-300">
+                    <label
+                      htmlFor="email"
+                      className="text-sm font-medium text-gray-300"
+                    >
                       Email
                     </label>
                     <Input
@@ -427,7 +417,9 @@ export default function RegistrationForm() {
                     />
                   </div>
 
-                  {error && <span className="text-red-500 text-xs">{error}</span>}
+                  {error && (
+                    <span className="text-red-500 text-xs">{error}</span>
+                  )}
 
                   <Button
                     type="submit"
@@ -479,14 +471,20 @@ export default function RegistrationForm() {
               >
                 <form onSubmit={handleOtpSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <h2 className="text-xl font-semibold text-white">Verify your email</h2>
+                    <h2 className="text-xl font-semibold text-white">
+                      Verify your email
+                    </h2>
                     <p className="text-sm text-gray-400">
-                      We've sent a 6-digit code to <span className="text-indigo-400">{email}</span>
+                      We've sent a 6-digit code to{" "}
+                      <span className="text-indigo-400">{email}</span>
                     </p>
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="otp-0" className="text-sm font-medium text-gray-300">
+                    <label
+                      htmlFor="otp-0"
+                      className="text-sm font-medium text-gray-300"
+                    >
                       Verification Code
                     </label>
                     <div className="flex justify-between gap-2">
@@ -499,7 +497,9 @@ export default function RegistrationForm() {
                           pattern="[0-9]*"
                           maxLength={1}
                           value={digit}
-                          onChange={(e) => handleOtpChange(index, e.target.value)}
+                          onChange={(e) =>
+                            handleOtpChange(index, e.target.value)
+                          }
                           onKeyDown={(e) => handleOtpKeyDown(index, e)}
                           className="bg-[#1a1b26] border-white/10 text-white focus:border-indigo-500 focus:ring-indigo-500/20 w-12 h-12 text-center text-lg"
                         />
@@ -507,17 +507,19 @@ export default function RegistrationForm() {
                     </div>
                     <p className="text-xs text-gray-500 mt-2">
                       Didn't receive a code?{" "}
-                      <button 
-                        type="button" 
+                      <button
+                        type="button"
                         className="text-indigo-400 hover:text-indigo-300"
                         onClick={handleOnclickResendOtp}
-                        >
+                      >
                         {isResending ? "Resending..." : "Resend"}
                       </button>
                     </p>
                   </div>
 
-                  {error && <span className="text-red-500 text-xs">{error}</span>}
+                  {error && (
+                    <span className="text-red-500 text-xs">{error}</span>
+                  )}
 
                   <div className="flex gap-3">
                     <Button
@@ -581,12 +583,19 @@ export default function RegistrationForm() {
               >
                 <form onSubmit={handleDetailsSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <h2 className="text-xl font-semibold text-white">Your profile</h2>
-                    <p className="text-sm text-gray-400">Tell us a bit about yourself</p>
+                    <h2 className="text-xl font-semibold text-white">
+                      Your profile
+                    </h2>
+                    <p className="text-sm text-gray-400">
+                      Tell us a bit about yourself
+                    </p>
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="displayName" className="text-sm font-medium text-gray-300">
+                    <label
+                      htmlFor="displayName"
+                      className="text-sm font-medium text-gray-300"
+                    >
                       Display Name
                     </label>
                     <Input
@@ -601,7 +610,10 @@ export default function RegistrationForm() {
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="loginName" className="text-sm font-medium text-gray-300">
+                    <label
+                      htmlFor="loginName"
+                      className="text-sm font-medium text-gray-300"
+                    >
                       Username
                     </label>
                     <Input
@@ -616,7 +628,10 @@ export default function RegistrationForm() {
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="dateOfBirth" className="text-sm font-medium text-gray-300">
+                    <label
+                      htmlFor="dateOfBirth"
+                      className="text-sm font-medium text-gray-300"
+                    >
                       Date of Birth
                     </label>
                     <div className="grid grid-cols-3 gap-2">
@@ -646,8 +661,18 @@ export default function RegistrationForm() {
                           <option value="12">December</option>
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                          <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          <svg
+                            className="h-4 w-4 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
                           </svg>
                         </div>
                       </div>
@@ -665,17 +690,27 @@ export default function RegistrationForm() {
                             Day
                           </option>
                           {[...Array(31)].map((_, i) => {
-                            const day = (i + 1).toString().padStart(2, "0")
+                            const day = (i + 1).toString().padStart(2, "0");
                             return (
                               <option key={day} value={day}>
                                 {day}
                               </option>
-                            )
+                            );
                           })}
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                          <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          <svg
+                            className="h-4 w-4 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
                           </svg>
                         </div>
                       </div>
@@ -693,25 +728,41 @@ export default function RegistrationForm() {
                             Year
                           </option>
                           {[...Array(100)].map((_, i) => {
-                            const year = (new Date().getFullYear() - i).toString()
+                            const year = (
+                              new Date().getFullYear() - i
+                            ).toString();
                             return (
                               <option key={year} value={year}>
                                 {year}
                               </option>
-                            )
+                            );
                           })}
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-                          <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          <svg
+                            className="h-4 w-4 text-gray-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 9l-7 7-7-7"
+                            />
                           </svg>
                         </div>
                       </div>
                     </div>
-                    <p className="text-xs text-gray-500">You must be at least 13 years old to register</p>
+                    <p className="text-xs text-gray-500">
+                      You must be at least 13 years old to register
+                    </p>
                   </div>
 
-                  {error && <span className="text-red-500 text-xs">{error}</span>}
+                  {error && (
+                    <span className="text-red-500 text-xs">{error}</span>
+                  )}
 
                   <div className="flex gap-3">
                     <Button
@@ -775,12 +826,19 @@ export default function RegistrationForm() {
               >
                 <form onSubmit={handlePasswordSubmit} className="space-y-4">
                   <div className="space-y-2">
-                    <h2 className="text-xl font-semibold text-white">Create password</h2>
-                    <p className="text-sm text-gray-400">Set a secure password for your new account</p>
+                    <h2 className="text-xl font-semibold text-white">
+                      Create password
+                    </h2>
+                    <p className="text-sm text-gray-400">
+                      Set a secure password for your new account
+                    </p>
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="password" className="text-sm font-medium text-gray-300">
+                    <label
+                      htmlFor="password"
+                      className="text-sm font-medium text-gray-300"
+                    >
                       Password
                     </label>
                     <Input
@@ -792,11 +850,16 @@ export default function RegistrationForm() {
                       required
                       className="bg-[#1a1b26] border-white/10 text-white focus:border-indigo-500 focus:ring-indigo-500/20"
                     />
-                    <p className="text-xs text-gray-500">Password must be at least 8 characters long</p>
+                    <p className="text-xs text-gray-500">
+                      Password must be at least 8 characters long
+                    </p>
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="confirm-password" className="text-sm font-medium text-gray-300">
+                    <label
+                      htmlFor="confirm-password"
+                      className="text-sm font-medium text-gray-300"
+                    >
                       Confirm Password
                     </label>
                     <Input
@@ -810,7 +873,9 @@ export default function RegistrationForm() {
                     />
                   </div>
 
-                  {error && <span className="text-red-500 text-xs">{error}</span>}
+                  {error && (
+                    <span className="text-red-500 text-xs">{error}</span>
+                  )}
 
                   <div className="flex gap-3">
                     <Button
@@ -875,15 +940,23 @@ export default function RegistrationForm() {
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
+                  transition={{
+                    delay: 0.2,
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 15
+                  }}
                   className="w-20 h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6"
                 >
                   <CheckCircle className="h-10 w-10 text-indigo-500" />
                 </motion.div>
 
-                <h2 className="text-2xl font-bold text-white mb-2">Account Created!</h2>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  Account Created!
+                </h2>
                 <p className="text-gray-400 mb-6">
-                  Your account has been successfully created. Redirecting you to the home page...
+                  Your account has been successfully created. Redirecting you to
+                  the home page...
                 </p>
 
                 <div className="w-full bg-white/10 h-1 rounded-full overflow-hidden">
@@ -925,5 +998,5 @@ export default function RegistrationForm() {
         <p>Protected by enterprise-grade security</p>
       </motion.div>
     </div>
-  )
+  );
 }

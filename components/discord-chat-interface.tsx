@@ -44,7 +44,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipProvider } from "@/components/ui/tooltip";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function DiscordChatInterface() {
@@ -535,9 +534,9 @@ export default function DiscordChatInterface() {
 
             <ChatMessage
               avatar="/placeholder.svg?height=40&width=40"
-              username="HarmonyBot"
+              username="Community Bot"
               time="10:00 AM"
-              message="👋 Welcome to the HarmonyHub community! This is where you can connect with other members, share ideas, and collaborate on projects."
+              message="👋 Welcome to the Community Hub! This is where you can connect with other members, share ideas, and collaborate on projects."
               isBot
               isPinned
             />
@@ -675,7 +674,7 @@ export default function DiscordChatInterface() {
                 Online — 4
               </h3>
               <div className="space-y-2">
-                <MemberItem name="HarmonyBot" status="Bot" isBot />
+                <MemberItem name="Community Bot" status="Bot" isBot />
                 <MemberItem
                   name="Alex"
                   status="Online"

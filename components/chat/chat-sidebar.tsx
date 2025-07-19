@@ -23,6 +23,7 @@ import { Conversation, User } from "@/types/chat";
 import ConversationItem from "./conversation-item";
 import { ConversationListSkeleton } from "./skeleton-loaders";
 import GroupConversationItem from "./group-conversation-item";
+import { useRouter } from "next/navigation";
 
 interface SidebarProps {
   isMobile: boolean;
@@ -57,6 +58,8 @@ const ChatSidebar: React.FC<SidebarProps> = ({
   const privateConversations = conversations.filter(
     (conversation) => conversation.type === "private"
   );
+
+  const router = useRouter();
 
   return (
     <motion.div
@@ -131,7 +134,7 @@ const ChatSidebar: React.FC<SidebarProps> = ({
             <ConversationListSkeleton count={6} />
           ) : (
             <div className="p-2 space-y-1">
-              {activeTab === "chats" && privateConversations ? (
+              {activeTab === "chats" && privateConversations.length > 0 ? (
                 privateConversations.map((conversation) => (
                   <ConversationItem
                     key={conversation.id}
@@ -245,7 +248,7 @@ const ChatSidebar: React.FC<SidebarProps> = ({
                     localStorage.clear();
                     ws.current?.close();
                     // redirect to login or login page;
-                    window.location.href = "/login";
+                    router.push("/login");
                   }}
                 >
                   <LogOut className="h-5 w-5" />

@@ -217,7 +217,7 @@ export default function ChatHeader({
           onClick={() => setIsSidebarOpen((prev) => !prev)}
           className="mr-4 text-gray-400 hover:text-white"
         >
-          {isSidebarOpen || !isMobile ? (
+          {isSidebarOpen ? (
             <X className="h-5 w-5" />
           ) : (
             <Menu className="h-5 w-5" />

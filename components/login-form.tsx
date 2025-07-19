@@ -1,67 +1,67 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Users, ArrowRight, Github, Mail } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { CallApi } from "@/config/axios.config"
+import { useState } from "react";
+import { motion } from "framer-motion";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Users, ArrowRight, Github, Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { CallApi } from "@/config/axios.config";
 
-import { useToast } from "@/hooks/use-toast"
-import { LoginResponse } from "@/types/auth"
+import { useToast } from "@/hooks/use-toast";
+import { LoginResponse } from "@/types/auth";
 
 export default function LoginForm() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [error, setError] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<boolean>(false);
 
-
-  const router = useRouter()
-  const { toast } = useToast()
+  const router = useRouter();
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     // Simulate API call
     try {
       const dataRaw = await CallApi.post("/auth/login", {
         email,
-        password,
-      })
+        password
+      });
 
-      const res = dataRaw.data.data as LoginResponse
+      const res = dataRaw.data.data as LoginResponse;
 
       toast({
         title: "Login successful",
         description: "Welcome back! You are now logged in.",
-        variant: "default",
-      })
+        variant: "default"
+      });
       // setLocalStorage
-      localStorage.setItem(process.env.NEXT_PUBLIC_SESSION_KEY!, res.token)
-      localStorage.setItem(process.env.NEXT_PUBLIC_USER_KEY!, JSON.stringify(res.user))
-    
+      localStorage.setItem(process.env.NEXT_PUBLIC_SESSION_KEY!, res.token);
+      localStorage.setItem(
+        process.env.NEXT_PUBLIC_USER_KEY!,
+        JSON.stringify(res.user)
+      );
     } catch (error) {
-      setError(true)
+      setError(true);
       toast({
         title: "Login failed",
         description: "Invalid email or password.",
-        variant: "destructive",
-      })
-      setIsLoading(false)
-      return
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
     }
 
-    setIsLoading(false) 
-    router.push("/chat")
-  }
-
+    setIsLoading(false);
+    router.push("/chat");
+  };
 
   return (
     <div className="relative">
@@ -75,7 +75,7 @@ export default function LoginForm() {
         <div className="p-3 border-b border-white/10 flex items-center justify-center">
           <Link href="/" className="flex items-center space-x-2">
             <Users className="w-6 h-6 text-indigo-500" />
-            <span className="text-white font-medium">HarmonyHub</span>
+            <span className="text-white text-lg font-medium">CommuniHub</span>
           </Link>
           <span className="mx-2 text-gray-500">|</span>
           <h1 className="text-lg font-medium text-white">Login</h1>
@@ -85,7 +85,10 @@ export default function LoginForm() {
         <div className="p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-300">
+              <label
+                htmlFor="email"
+                className="text-sm font-medium text-gray-300"
+              >
                 Email
               </label>
               <Input
@@ -98,11 +101,16 @@ export default function LoginForm() {
                 required
                 className="bg-[#1a1b26] border-white/10 text-white focus:border-indigo-500 focus:ring-indigo-500/20"
               />
-              {error && <span className="text-red-500 text-sm">Email invalid!</span>}
+              {error && (
+                <span className="text-red-500 text-sm">Email invalid!</span>
+              )}
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label htmlFor="password" className="text-sm font-medium text-gray-300">
+                <label
+                  htmlFor="password"
+                  className="text-sm font-medium text-gray-300"
+                >
                   Password
                 </label>
                 <Link
@@ -121,7 +129,9 @@ export default function LoginForm() {
                 required
                 className="bg-[#1a1b26] border-white/10 text-white focus:border-indigo-500 focus:ring-indigo-500/20"
               />
-              {error && <span className="text-red-500 text-sm">Password invalid!</span>}
+              {error && (
+                <span className="text-red-500 text-sm">Password invalid!</span>
+              )}
             </div>
             <div className="flex items-center space-x-2">
               <Checkbox id="remember" />
@@ -132,7 +142,11 @@ export default function LoginForm() {
                 Remember me
               </label>
             </div>
-            <Button type="submit" disabled={isLoading} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
               {isLoading ? (
                 <div className="flex items-center">
                   <svg
@@ -172,16 +186,24 @@ export default function LoginForm() {
                 <div className="w-full border-t border-white/10"></div>
               </div>
               <div className="relative flex justify-center text-xs">
-                <span className="px-2 bg-[#1e1f2e] text-gray-400">Or continue with</span>
+                <span className="px-2 bg-[#1e1f2e] text-gray-400">
+                  Or continue with
+                </span>
               </div>
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
-              <Button variant="outline" className="border-white/10 text-white hover:bg-white/5 hover:text-indigo-400">
+              <Button
+                variant="outline"
+                className="border-white/10 text-white hover:bg-white/5 hover:text-indigo-400"
+              >
                 <Github className="mr-2 h-4 w-4" />
                 GitHub
               </Button>
-              <Button variant="outline" className="border-white/10 text-white hover:bg-white/5 hover:text-indigo-400">
+              <Button
+                variant="outline"
+                className="border-white/10 text-white hover:bg-white/5 hover:text-indigo-400"
+              >
                 <Mail className="mr-2 h-4 w-4" />
                 Google
               </Button>
@@ -213,5 +235,5 @@ export default function LoginForm() {
         <p>Protected by enterprise-grade security</p>
       </motion.div>
     </div>
-  )
+  );
 }
