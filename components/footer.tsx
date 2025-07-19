@@ -1,11 +1,21 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { motion } from "framer-motion"
-import Link from "next/link"
-import { Users, Github, Twitter, Instagram, Linkedin, Heart, Mail, MapPin, Phone } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { motion } from "framer-motion";
+import Link from "next/link";
+import {
+  Users,
+  Github,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Heart,
+  Mail,
+  MapPin,
+  Phone
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function Footer() {
   return (
@@ -16,7 +26,7 @@ export default function Footer() {
         <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-purple-500/5 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="container mx-auto relative z-10">
+      <div id="discover" className="container mx-auto relative z-10">
         {/* Newsletter section */}
         <div className="max-w-4xl mx-auto mb-16">
           <motion.div
@@ -27,9 +37,12 @@ export default function Footer() {
           >
             <div className="flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="text-center md:text-left">
-                <h3 className="text-2xl font-bold text-white mb-2">Newsletter</h3>
+                <h3 className="text-2xl font-bold text-white mb-2">
+                  Newsletter
+                </h3>
                 <p className="text-gray-400 max-w-md">
-                  Subscribe for the latest updates, community news, and exclusive offers.
+                  Subscribe for the latest updates, community news, and
+                  exclusive offers.
                 </p>
               </div>
               <div className="flex w-full md:w-auto">
@@ -38,44 +51,68 @@ export default function Footer() {
                   placeholder="Enter your email"
                   className="bg-[#1a1b26] border border-white/10 rounded-l-[6px] px-4 py-2 text-white w-full md:w-64 focus:outline-none focus:border-indigo-500"
                 />
-                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-l-none">Subscribe</Button>
+                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-l-none">
+                  Subscribe
+                </Button>
               </div>
             </div>
           </motion.div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
+        <div
+          id="support"
+          className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12"
+        >
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center space-x-2 mb-4">
               <Users className="w-8 h-8 text-indigo-500" />
-              <span className="text-white font-medium text-xl">HarmonyHub</span>
+              <span className="text-white font-medium text-xl">CommuniHub</span>
             </Link>
             <p className="text-gray-400 mb-4">
-              A vibrant community platform where people connect, share ideas, and build relationships in real-time.
+              A vibrant community platform where people connect, share ideas,
+              and build relationships in real-time.
             </p>
             <div className="flex space-x-4 mb-6">
-              <SocialIcon icon={<Github className="w-5 h-5" />} href="https://github.com/dinhdev-nu" />
-              <SocialIcon icon={<Twitter className="w-5 h-5" />} href="https://twitter.com" />
-              <SocialIcon icon={<Instagram className="w-5 h-5" />} href="https://instagram.com" />
-              <SocialIcon icon={<Linkedin className="w-5 h-5" />} href="https://linkedin.com" />
+              <SocialIcon
+                icon={<Github className="w-5 h-5" />}
+                href="https://github.com/dinhdev-nu"
+              />
+              <SocialIcon
+                icon={<Twitter className="w-5 h-5" />}
+                href="https://twitter.com"
+              />
+              <SocialIcon
+                icon={<Instagram className="w-5 h-5" />}
+                href="https://instagram.com"
+              />
+              <SocialIcon
+                icon={<Linkedin className="w-5 h-5" />}
+                href="https://linkedin.com"
+              />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center text-gray-400">
                 <Mail className="w-4 h-4 mr-2 text-indigo-400" />
-                <a href="mailto:contact@harmonyhub.com" className="hover:text-indigo-400 transition-colors">
-                  contact@harmonyhub.com
+                <a
+                  href="mailto:truongbadinh13579@gmail.com"
+                  className="hover:text-indigo-400 transition-colors"
+                >
+                  contact@truongbadinh13579@gmail.com
                 </a>
               </div>
               <div className="flex items-center text-gray-400">
                 <Phone className="w-4 h-4 mr-2 text-indigo-400" />
-                <a href="tel:+1234567890" className="hover:text-indigo-400 transition-colors">
-                  +1 (234) 567-890
+                <a
+                  href="tel:+1234567890"
+                  className="hover:text-indigo-400 transition-colors"
+                >
+                  +123 456 7890
                 </a>
               </div>
               <div className="flex items-center text-gray-400">
                 <MapPin className="w-4 h-4 mr-2 text-indigo-400" />
-                <span>San Francisco, CA</span>
+                <span>Thanh Pho Hue, Vietnam</span>
               </div>
             </div>
           </div>
@@ -125,7 +162,7 @@ export default function Footer() {
 
         <div className="border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-gray-500 text-sm">
           <div className="mb-4 md:mb-0">
-            <p>© {new Date().getFullYear()} HarmonyHub. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} CommuniHub. All rights reserved.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-4 md:gap-6">
             <FooterLink href="/terms">Terms of Service</FooterLink>
@@ -147,7 +184,7 @@ export default function Footer() {
         </motion.div>
       </div>
     </footer>
-  )
+  );
 }
 
 function SocialIcon({ icon, href }: { icon: React.ReactNode; href: string }) {
@@ -160,16 +197,25 @@ function SocialIcon({ icon, href }: { icon: React.ReactNode; href: string }) {
     >
       {icon}
     </a>
-  )
+  );
 }
 
-function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
+function FooterLink({
+  href,
+  children
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
   return (
     <li>
-      <Link href={href} className="text-gray-400 hover:text-indigo-400 transition-colors relative group">
+      <Link
+        href={href}
+        className="text-gray-400 hover:text-indigo-400 transition-colors relative group"
+      >
         {children}
         <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-500 transition-all group-hover:w-full"></span>
       </Link>
     </li>
-  )
+  );
 }

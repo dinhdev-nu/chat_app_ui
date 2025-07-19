@@ -1,24 +1,23 @@
-"use client"
+"use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { useMediaQuery } from "@/hooks/use-media-query"
-import { useToast } from "@/hooks/use-toast"
-import { Avatar } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { TooltipRoot, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import ChatMessages from "@/components/chat/chat-messages"
-import UserDiscovery from "@/components/chat/user-discovery"
-import EmotePanel from "@/components/chat/emote-panel"
-import NotificationCenter from "@/components/chat/notification-center"
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence, m } from "framer-motion";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { useToast } from "@/hooks/use-toast";
+import { Avatar } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
-  Menu,
-  X,
+  TooltipRoot,
+  TooltipTrigger,
+  TooltipContent,
+  TooltipProvider
+} from "@/components/ui/tooltip";
+import ChatMessages from "@/components/chat/chat-messages";
+import UserDiscovery from "@/components/chat/user-discovery";
+import EmotePanel from "@/components/chat/emote-panel";
+import NotificationCenter from "@/components/chat/notification-center";
+import {
   Search,
-  Users,
   Bell,
   Settings,
   MessageSquare,
@@ -27,125 +26,137 @@ import {
   Send,
   ImageIcon,
   Mic,
-  Video,
-  Phone,
-  MoreHorizontal,
-  UserPlus,
-  Hash,
-  Bookmark,
-  LogOut,
-} from "lucide-react"
-import { AckMessage, Conversation, CreateRoomRequest, CreateRoomResponse, Message, MessageRequest, MessageResponse, OnMessage, UserStatus } from "@/types/chat"
-import { CallApiWithAuth } from "@/config/axios.config"
-import { User } from "@/types/chat"
-import useInitChat from "@/lib/hooks/use-init-chat"
-import ConversationItem from "./conversation-item"
-import { UserInfo } from "@/types/user"
-import { useRouter } from "next/router"
-
+  UserPlus
+} from "lucide-react";
+import { ChatMessagesSkeleton } from "@/components/chat/skeleton-loaders";
+import {
+  AckMessage,
+  Conversation,
+  CreateRoom,
+  GroupConversation,
+  Message,
+  MessageGroupResponse,
+  MessagePrivateResponse,
+  MessageRequest,
+  OnMessage,
+  PrivateConversation,
+  UserStatus
+} from "@/types/chat";
+import { CallApiWithAuth } from "@/config/axios.config";
+import { User } from "@/types/chat";
+import useInitChat from "@/lib/hooks/use-init-chat";
+import { UserInfo } from "@/types/user";
+import { useRouter } from "next/router";
+import ChatSidebar from "./chat-sidebar";
+import GroupCreationModal from "./group-creation-modal";
+import useGetGroup from "@/lib/hooks/use-get-group";
+import ChatHeader from "./chat-header";
+import GroupChatMessages from "./group-chat-messages";
+import { fetchGetMessages } from "@/lib/api/chat";
+import {
+  mockNotificationsData,
+  Notification
+} from "@/lib/mock-notifications-data";
 
 export default function ImmersiveChatInterface() {
   // State
-  const [conversations, setConversations] = useState<Conversation[]>([])
-  const [currentUser, setCurrentUser] = useState<User>(
-    () => {
-      const userData = localStorage.getItem(process.env.NEXT_PUBLIC_USER_KEY!);
-      if (!userData) {
-        useRouter().push("");
-        return { id: 0, name: "", avatar: "", status: "offline" }; // Default values
-      }
-      const parsedUser = JSON.parse(userData) as UserInfo;
-      return {
-        id: parsedUser.user_id,
-        name: parsedUser.user_nickname || "",
-        avatar: parsedUser.user_avatar || "/placeholder.svg?height=40&width=40",
-        status: "online",
-      };
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [currentUser, setCurrentUser] = useState<User>(() => {
+    const userData = localStorage.getItem(process.env.NEXT_PUBLIC_USER_KEY!);
+    if (!userData) {
+      useRouter().push("");
+      return { id: 0, name: "", avatar: "", status: "offline" }; // Default values
     }
-  )
+    const parsedUser = JSON.parse(userData) as UserInfo;
+    return {
+      id: parsedUser.user_id,
+      name: parsedUser.user_nickname || "",
+      avatar: parsedUser.user_avatar || "/placeholder.svg?height=40&width=40",
+      status: "online"
+    };
+  });
 
-  const [activeConversation, setActiveConversation] = useState<Conversation | null>(null)
-  const [messages, setMessages] = useState<Message[]>([])
-  const [message, setMessage] = useState("")
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
-  const [isEmotePanelOpen, setIsEmotePanelOpen] = useState(false)
-  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false)
-  const [isUserDiscoveryOpen, setIsUserDiscoveryOpen] = useState(false)
-  const [isTyping, setIsTyping] = useState(false)
-  const [activeTab, setActiveTab] = useState("chats")
-  const [notifications, setNotifications] = useState<
-    {
-      id: number
-      type: "message" | "friend" | "system"
-      user?: string
-      content: string
-      time: string
-      read: boolean
-    }[]
-  >([
-    { id: 1, type: "message", user: "Taylor", content: "Sent you a message", time: "2 min ago", read: false },
-    { id: 2, type: "friend", user: "Jordan", content: "Accepted your friend request", time: "1 hour ago", read: false },
-    { id: 3, type: "system", content: "Welcome to the new chat experience!", time: "2 hours ago", read: true },
-  ])
+  const [activeConversation, setActiveConversation] =
+    useState<Conversation | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [message, setMessage] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isEmotePanelOpen, setIsEmotePanelOpen] = useState(false);
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const [isUserDiscoveryOpen, setIsUserDiscoveryOpen] = useState(false);
+  const [typingUsers, setTypingUsers] = useState<User[]>([]);
+  const [isOpenCreateGroupModal, setIsOpenCreateGroupModal] = useState(false);
+  const [activeTab, setActiveTab] = useState("chats");
+  const [isFecthingGroups, setIsFetchingGroups] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>(
+    mockNotificationsData
+  );
+  const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null)
-  const conversationListRef = useRef<Conversation[]>([])
-  const acctiveConversationRef = useRef<Conversation | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const conversationListRef = useRef<Conversation[]>([]);
+  const acctiveConversationRef = useRef<Conversation | null>(null);
 
-  const { toast } = useToast()
-  const isMobile = useMediaQuery("(max-width: 768px)")
- 
-  const ws = useRef<WebSocket>(null)
+  const { toast } = useToast();
+  const isMobile = useMediaQuery("(max-width: 768px)");
+
+  const ws = useRef<WebSocket>(null);
 
   useEffect(() => {
-    conversationListRef.current = conversations
-    acctiveConversationRef.current = activeConversation
-  }, [conversations, activeConversation])
+    conversationListRef.current = conversations;
+    acctiveConversationRef.current = activeConversation;
+  }, [conversations, activeConversation]);
 
-
-  useEffect(() => setIsTyping(false), [activeConversation])
+  useEffect(() => setTypingUsers([]), [activeConversation]);
 
   // Close sidebar on mobile when conversation is selected
   useEffect(() => {
-    if (isMobile) {
-      setIsSidebarOpen(false)
+    if (isMobile && activeConversation) {
+      setIsSidebarOpen(false);
     }
-  }, [activeConversation, isMobile])
+  }, [activeConversation]);
 
   // Auto-open sidebar on desktop
   useEffect(() => {
     if (!isMobile) {
-      setIsSidebarOpen(true)
+      setIsSidebarOpen(true);
     }
-  }, [isMobile])
+  }, [isMobile]);
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    scrollToBottom()
+    scrollToBottom();
+  }, [messages]);
 
-    const lastMessage = messages[messages.length - 1]
-    if(lastMessage?.sender.id != currentUser.id && lastMessage?.status === "delivered" || lastMessage?.status === "sent") {
-      handleSendReadStatus(acctiveConversationRef.current as Conversation)
-    }
-  }, [messages])
+  useGetGroup({
+    activeTab,
+    isFetchingGroups: isFecthingGroups,
+    setIsFetchingGroups: setIsFetchingGroups,
+    setConversations,
+    setIsLoadingConversations,
+    currentUser,
+    toast
+  });
 
+  const handleReceiveMessage = (data: MessageRequest) => {
+    if (!data || data.sender_id === currentUser.id) return;
 
-   const handleReceiveMessage = (data: MessageRequest) => {
     // Check if the conversation exists
-    const conversation = conversationListRef.current.find((c) => c.id == data.room_id)
+    const conversation = conversationListRef.current.find(
+      (c) => c.id === data.room_id
+    );
 
-    // create a new conversation if it doesn't exist   
+    // create a new conversation if it doesn't exist
     if (!conversation) {
-      // get info room 
-
       // Create a new conversation object
-      const newConversation: Conversation = {
+      const newConversation: PrivateConversation = {
         id: data.room_id,
         user: {
           id: data.sender_id,
           name: data.sender_name,
           avatar: data.sender_avatar || "/placeholder.svg?height=48&width=48",
-          status: "online", // Assume online for received messages
+          status: "online" // Assume online for received messages
         } as User,
         messages: [] as Message[],
         lastMessage: {
@@ -155,520 +166,690 @@ export default function ImmersiveChatInterface() {
             id: data.sender_id,
             name: data.sender_name,
             avatar: data.sender_avatar || "/placeholder.svg?height=48&width=48",
-            status: "online",
+            status: "online"
           } as User,
           timestamp: new Date(data.send_at),
-          status: "delivered",
+          status: "delivered"
         },
-        unreadCount: 1, // Start with 1 unread message
-        isTemporary: false, // Temporary conversations will be handled separately
-      } as Conversation
+        unreadCount: 1,
+        isTemporary: false,
+        type: "private",
+        name: data.sender_name,
+        avatar: data.sender_avatar || "/placeholder.svg?height=48&width=48"
+      };
 
       // Add the new conversation to the state
-      setConversations((prev) => [newConversation, ...prev])
-      handleSendSubscribeTo([data.sender_id])
+      setConversations((prev) => [newConversation, ...prev]);
+      handleSendSubscribeTo([data.sender_id]);
       handleSendChangeStatus({
-        status: "online",
-      })
-      return
+        status: "online"
+      });
+      return;
     }
 
     // if convensation is active and conversation is temporary
-    if (acctiveConversationRef.current?.user.id === data.sender_id && acctiveConversationRef.current?.isTemporary) {
-      // Update the active conversation with the new message 
+    if (
+      acctiveConversationRef.current?.type === "private" &&
+      acctiveConversationRef.current.user.id === data.sender_id &&
+      acctiveConversationRef.current?.isTemporary
+    ) {
+      // Update the active conversation with the new message
       const newMessage: Message = {
-          id: data.id,
-          content: data.content,
-          sender: {
-            id: data.sender_id,
-            name: data.sender_name,
-            avatar: data.sender_avatar || "/placeholder.svg?height=48&width=48",
-            status: "online",
-          } as User,
-          timestamp: new Date(data.send_at),
-          status: "read",
+        id: data.id,
+        content: data.content,
+        sender: {
+          id: data.sender_id,
+          name: data.sender_name,
+          avatar: data.sender_avatar || "/placeholder.svg?height=48&width=48",
+          status: "online"
+        } as User,
+        timestamp: new Date(data.send_at),
+        status: "read"
+      };
+
+      setConversations((prev) => {
+        const conv = prev.find((c) => c.id === data.room_id);
+        if (!conv) return prev;
+        const updatedConv = {
+          ...conv,
+          id: data.room_id,
+          messages: [...(conv.messages || []), newMessage],
+          lastMessage: newMessage,
+          unreadCount: 0,
+          isTemporary: false
         };
 
-        setConversations((prev) => {
-          return prev.map((c) => {
-            if (c.id === data.room_id) {
-              return {
-                ...c,
-                id: data.room_id,
-                lastMessage: newMessage,
-                unreadCount: 0, // Reset unread count when sending a message
-              }
-            }
-            return c
-          })
-        })
+        return [updatedConv, ...prev.filter((c) => c.id !== conv.id)];
+      });
 
-        setActiveConversation((prev) => {
-          if (!prev || !prev.user) {
-            return null; // Ensure the previous state and user exist
-          }
-          return {
-            ...prev,
-            id: data.room_id,
-            isTemporary: false,
-            lastMessage: newMessage,
-            messages: [...(prev.messages || []), newMessage],
-          };
-        });
-        
-        setMessages((prevMessages) => [...prevMessages, newMessage])
-        
+      setActiveConversation((prev) => {
+        if (!prev) {
+          return null; // Ensure the previous state and user exist
+        }
+        return {
+          ...prev,
+          id: data.room_id,
+          isTemporary: false,
+          lastMessage: newMessage
+        } as PrivateConversation;
+      });
+
+      setMessages((prevMessages) => [...prevMessages, newMessage]);
+
       const payload = {
         room_id: data.room_id,
         user_id: currentUser.id,
-      }
+        last_message: data.id
+      };
 
       // update message status
-      CallApiWithAuth.post(`/chat/set-status`, payload)
+      CallApiWithAuth.post(`/chat/set-status`, payload);
 
-      handleSendSubscribeTo([data.sender_id])
-
-      return 
+      handleSendSubscribeTo([data.sender_id]);
+      handleSendReadStatus(acctiveConversationRef.current as Conversation);
+      return;
     }
     // If conversation exists, update it with the new message
     // conversation is active
-    if (acctiveConversationRef.current?.id === conversation.id) {
+    if (
+      conversation &&
+      acctiveConversationRef.current?.id === conversation.id
+    ) {
       // Add the new message to the active conversation
-        const newMessage: Message = {
-          id: data.id,
-          content: data.content,
-          sender: {
+      let sender: User;
+
+      if (conversation.type === "private") {
+        sender = {
+          id: data.sender_id,
+          name: data.sender_name,
+          avatar: data.sender_avatar || "/placeholder.svg?height=48&width=48",
+          status: "online"
+        };
+      } else {
+        sender =
+          conversation.participants.find((u) => u.id === data.sender_id) ||
+          ({
             id: data.sender_id,
-            name: acctiveConversationRef.current?.user.name,
-            avatar: acctiveConversationRef.current?.user.avatar || "/placeholder.svg?height=48&width=48",
-            status: "online", // Assume online for received messages
-          } as User,
-          timestamp: new Date(data.send_at),
-          status: "delivered",
-        }
+            name: data.sender_name,
+            avatar: data.sender_avatar || "/placeholder.svg?height:48&width=48",
+            status: "online"
+          } as User);
+      }
+
+      const newMessage: Message = {
+        id: data.id,
+        content: data.content,
+        timestamp: new Date(data.send_at),
+        status: "delivered",
+        type: data.content_type,
+        sender: sender
+      };
 
       setConversations((prev) => {
-        return prev.map((c) => {
-          if (c.id === conversation.id) {
-            return {
-              ...c,
-              lastMessage: newMessage,
-              unreadCount: 0, // Reset unread count when sending a message
-            }
-          }
-          return c
-        })
-      })
+        const conv = prev.find((c) => c.id === data.room_id);
+        if (!conv) return prev;
+        const updatedConv = {
+          ...conv,
+          messages: [...(conv.messages || []), newMessage],
+          lastMessage: newMessage,
+          unreadCount: 0 // Reset unread count when sending a message
+        };
 
-      
+        return [updatedConv, ...prev.filter((c) => c.id !== conv.id)];
+      });
+
       setActiveConversation((prev) => {
-        if (!prev) return null // Ensure previous state exists
+        if (!prev) return null; // Ensure previous state exists
 
         return {
           ...prev,
-          lastMessage: newMessage,
-        } 
-      })
+          lastMessage: newMessage
+        };
+      });
 
-      setMessages((prev) => [...prev, newMessage])
-
-
+      setMessages((prev) => [...prev, newMessage]);
       // update message status
       const payload = {
         room_id: conversation.id,
         user_id: currentUser.id,
-      }
-      CallApiWithAuth.post(`/chat/set-status`, payload)
-
-      return
+        last_message: data.id
+      };
+      CallApiWithAuth.post(`/chat/set-status`, payload);
+      acctiveConversationRef.current.type === "private" &&
+        handleSendReadStatus(acctiveConversationRef.current as Conversation);
+      return;
     }
 
     // If conversation is not active, increment unread count
-    setConversations((prev) =>
-      prev.map((c) =>
-        c.id === conversation.id
-          ? {
-              ...c,
-              unreadCount: c.unreadCount + 1,
-              lastMessage: {
-                id: data.id,
-                content: data.content,
-                sender: {
-                  id: data.sender_id,
-                  name: conversation.user.name,
-                  avatar: conversation.user.avatar || "/placeholder.svg?height=48&width=48",
-                  status: "online",
-                } as User,
-                timestamp: new Date(data.send_at),
-                status: "delivered",
-              },
-            }
-          : c
-      )
-    )
-  }
+    setConversations((prev) => {
+      const conv = prev.find((c) => c.id === data.room_id);
+      if (!conv) return prev;
 
-  // Handle ack 
+      const newMessage: Message = {
+        id: data.id,
+        content: data.content,
+        timestamp: new Date(data.send_at),
+        status: "delivered",
+        type: data.content_type,
+        sender: {
+          id: data.sender_id,
+          name: data.sender_name,
+          avatar: data.sender_avatar || "/placeholder.svg?height=48&width=48",
+          status: "online"
+        } as User
+      };
+
+      const updatedConv = {
+        ...conv,
+        unreadCount: conv.unreadCount + 1,
+        lastMessage: newMessage,
+        messages: [...(conv.messages || []), newMessage]
+      };
+
+      return [updatedConv, ...prev.filter((c) => c.id !== conv.id)];
+    });
+  };
+
+  // Handle ack
   const handleReceiverAckMessage = (data: AckMessage) => {
-    if(!data || data.content.event !== "message") return
-    const message = data.content.message as MessageRequest
-    if(data.status === "success") {
-      setTimeout(() => {
-        if(message.room_id === acctiveConversationRef.current?.id) {
-          setMessages((prev) =>
-              prev.map((msg) => {
-                if (msg.id === 0) {
-                  return {
-                    ...msg,
-                    id: data.message_id,
-                    status: "delivered", 
-                  }
-                }
-                return msg
-              }
-              )
-            )
-        }
-        }, 500);
+    if (!data || data.content.event !== "message") return;
+    const message = data.content.message as MessageRequest;
+    if (data.status === "success") {
+      if (message.room_id === acctiveConversationRef.current?.id) {
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.id === 0) {
+              return {
+                ...msg,
+                id: data.message_id,
+                status: "delivered"
+              };
+            }
+            return msg;
+          })
+        );
+      }
     } else {
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",
-        variant: "destructive",
-      })
+        variant: "destructive"
+      });
       // delete the message from the state
-      setMessages((prev) =>
-        prev.filter((msg) => msg.id !== 0)
-      )
+      setMessages((prev) => prev.filter((msg) => msg.id !== 0));
     }
-  }
+  };
 
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const typingTimeoutRef = useRef<Record<number, NodeJS.Timeout>>({});
   const handleReceiveTyping = (data: OnMessage) => {
-    if (!data || !data.typing?.room_id || !data.sender_id) return
-    // Check if the conversation is active
-    if (acctiveConversationRef.current?.id === data.typing.room_id) {
-      setIsTyping(true)
+    if (!data || !data.typing?.room_id || !data.sender_id) return;
 
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
+    const senderID = data.sender_id;
+    if (
+      acctiveConversationRef.current?.id !== data.typing.room_id ||
+      currentUser.id === senderID
+    )
+      return;
+    setTypingUsers((prev) => {
+      const existingUser = prev.some((u) => u.id === senderID);
+      if (existingUser) {
+        return prev;
       }
+      let user: User | undefined;
+      if (acctiveConversationRef.current?.type === "private") {
+        user = acctiveConversationRef.current.user;
+      } else {
+        user = acctiveConversationRef.current?.participants.find(
+          (p) => p.id === senderID
+        );
+      }
+      return user ? [...prev, user] : prev;
+    });
 
-      typingTimeoutRef.current = setTimeout(() => {
-        setIsTyping(false)
-      }, 3000)
-      
+    if (typingTimeoutRef.current[senderID]) {
+      clearTimeout(typingTimeoutRef.current[senderID]);
     }
-  }
+
+    typingTimeoutRef.current[senderID] = setTimeout(() => {
+      setTypingUsers((prev) => prev.filter((u) => u.id !== senderID));
+      delete typingTimeoutRef.current[senderID];
+    }, 3000);
+  };
 
   const handleReceiveReadStatus = (data: OnMessage) => {
-    if (!data || !data.read?.room_id || !data.sender_id) return
+    if (!data || !data.read?.room_id || !data.sender_id) return;
     // Check if the conversation is active
     if (acctiveConversationRef.current?.id === data.read.room_id) {
-      setMessages((prev) =>
-        prev.map((msg) => {
-          if (msg.sender.id === currentUser.id && msg.status === "delivered") {
+      setConversations((prev) => {
+        return prev.map((c) => {
+          if (c.id === data.read?.room_id) {
             return {
-              ...msg,
-              status: "read",
-            }
+              ...c,
+              membersLastSeen: c.membersLastSeen?.map((m) => {
+                if (m.UserID === data.sender_id) {
+                  return {
+                    ...m,
+                    MessageID:
+                      acctiveConversationRef.current?.lastMessage?.id || 0
+                  };
+                }
+                return m;
+              })
+            };
           }
-          return msg
-        })
-      )
+          return c;
+        });
+      });
+      setTimeout(() => {
+        setMessages((prev) => prev.map((msg) => ({ ...msg, status: "read" })));
+      }, 200);
     }
-  }
+  };
 
   const handleReceiveUserStatus = (data: OnMessage) => {
-    if (!data) return
-    
+    if (!data) return;
+
     setConversations((prev) =>
       prev.map((c) => {
-        if (c.user.id == data.sender_id) {
+        if (c.type === "private" && c.user.id == data.sender_id) {
           return {
             ...c,
             user: {
               ...c.user,
-              status: data.status?.status as UserStatus["status"],
-            },
-          }
-        }
-        return c
-      }))
-      if (acctiveConversationRef.current?.user.id === data.sender_id) {
-        setActiveConversation((prev) => {
-          if (!prev) return null // Ensure previous state exists
+              status: data.status?.status as UserStatus["status"]
+            }
+          };
+        } else if (c.type === "group") {
           return {
-            ...prev,
-            user: {
-              ...prev.user,
-              status: data.status?.status as UserStatus["status"],
-            },
+            ...c,
+            participants: c.participants.map((u) => {
+              if (u.id === data.sender_id) {
+                return {
+                  ...u,
+                  status: data.status?.status as UserStatus["status"]
+                };
+              }
+              return u;
+            })
+          };
+        }
+        return c;
+      })
+    );
+    if (
+      acctiveConversationRef.current?.type === "private" &&
+      acctiveConversationRef.current?.user.id === data.sender_id
+    ) {
+      setActiveConversation((prev) => {
+        if (!prev) return null; // Ensure previous state exists
+        if (prev.type !== "private") return prev; // Only update if private conversation
+        return {
+          ...prev,
+          user: {
+            ...prev.user,
+            status: data.status?.status as UserStatus["status"]
           }
-        })
-      }
-  }
+        };
+      });
+    } else if (
+      acctiveConversationRef.current?.type === "group" &&
+      acctiveConversationRef.current?.participants.some(
+        (u) => u.id === data.sender_id
+      )
+    ) {
+      setActiveConversation((prev) => {
+        if (!prev) return null; // Ensure previous state exists
+        if (prev.type !== "group") return prev; // Only update if group conversation
+        return {
+          ...prev,
+          participants: prev.participants.map((u) => {
+            if (u.id === data.sender_id) {
+              return {
+                ...u,
+                status: data.status?.status as UserStatus["status"]
+              };
+            }
+            return u;
+          })
+        };
+      });
+    }
+  };
+
+  const handleReceiveNewGroup = (data: OnMessage) => {
+    const room = data.room as GroupConversation;
+    if (!room || !room.id) return;
+
+    setConversations((prev) => [room, ...prev]);
+
+    // add subscribe to the new group
+    handleSendSubscribeTo(
+      room.participants.map((u) => u.id).filter((id) => id !== currentUser.id)
+    );
+  };
 
   // Initialize chat page vả
   useInitChat({
     wsRef: ws,
     setCurrentUser,
     setConversations,
+    setIsLoadingConversations,
     onReceiveMessage: handleReceiveMessage,
     onReceiveAck: handleReceiverAckMessage,
     onTyping: handleReceiveTyping,
     onRead: handleReceiveReadStatus,
     onStatusUpdate: handleReceiveUserStatus,
-    toast,
-  })
+    onNewGroup: handleReceiveNewGroup,
+    toast
+  });
 
-  const handleSendReadStatus = async (conversation: Conversation) => {
-    if (!conversation) return
-    if(!ws.current || ws.current.readyState !== WebSocket.OPEN) return
+  const handleSendReadStatus = (conversation: Conversation) => {
+    if (!conversation) return;
+
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
 
     const msgRequest: OnMessage = {
       event: "read",
       sender_id: currentUser.id,
-      receiver_id: conversation.user.id,
-      type: conversation.isGroup ? "group" : "single",
+      type: conversation.type === "group" ? "group" : "single",
       read: {
-        room_id: conversation.id,
-      },
+        room_id: conversation.id
+      }
+    };
+    if (conversation.type === "group") {
+      msgRequest.receiver_ids = conversation.participants.map((u) => u.id);
+    } else {
+      msgRequest.receiver_id = conversation.user.id;
     }
 
-    ws.current.send(JSON.stringify(msgRequest))
-
-  }
-
+    ws.current.send(JSON.stringify(msgRequest));
+  };
 
   // Handle conversation change
-  const handleConversationChange = async(conversation: Conversation) => {
+  const handleConversationChange = async (conversation: Conversation) => {
+    if (!conversation || acctiveConversationRef.current?.id === conversation.id)
+      return;
 
-    if (!conversation) return
+    // Gán trước để UI phản hồi nhanh
+    setActiveConversation(conversation);
+    setIsLoadingMessages(true);
+    try {
+      const messages = await fetchGetMessages(conversation.id, 1, 0);
+      if (
+        messages.messages_group === null &&
+        messages.messages_direct === null
+      ) {
+        return true; // Không còn tin nhắn nào để tải
+      }
+      let newMessages: Message[] = [];
 
-    setActiveConversation(conversation)
-
-    // check messages 
-    if (conversation.messages.length === 0 || conversation.unreadCount > 0) {
-      // 1 - 1
-      try {
-        const response = await CallApiWithAuth.get(`/chat/get-messages/${conversation.id}`)
-        const data = response.data.data.messages_direct as MessageResponse[]
-        console.log("Fetched messages:", data)
-        const messages: Message[] = data.map((msg: MessageResponse) => ({
+      if (conversation.type === "group") {
+        const data = messages.messages_group as MessageGroupResponse[];
+        const participantMap = new Map(
+          conversation.participants.map((p) => [p.id, p])
+        );
+        newMessages = data.map((msg) => ({
           id: msg.MessageID,
           content: msg.MessageContent,
-          sender: currentUser?.id == msg.MessageReceiverID ? {
-            id: conversation.user.id,
-            name: conversation.user.name,
-            avatar: conversation.user.avatar || "/placeholder.svg?height=48&width=48",
-            status: "online", // Assume online for received messages
-          }  as User : currentUser,
+          sender: participantMap.get(msg.MessageSenderID) || currentUser,
           timestamp: new Date(msg.MessageSentAt),
-          status: msg.MessageIsRead.Bool ? "read" : "delivered",
-        }))
+          status: "read"
+        }));
+      } else {
+        const data = messages.messages_direct as MessagePrivateResponse[];
+        const messageLastSeen = conversation.membersLastSeen?.find(
+          (m) => m.UserID === conversation.user.id
+        );
+        newMessages = data.map((msg) => {
+          const isMessageRead =
+            messageLastSeen?.MessageID &&
+            msg.MessageID <= messageLastSeen.MessageID;
+          return {
+            id: msg.MessageID,
+            content: msg.MessageContent,
+            sender:
+              currentUser.id === msg.MessageReceiverID
+                ? {
+                    id: conversation.user.id,
+                    name: conversation.user.name,
+                    avatar:
+                      conversation.user.avatar ||
+                      "/placeholder.svg?height=48&width=48",
+                    status: conversation.user.status || "offline"
+                  }
+                : currentUser,
+            timestamp: new Date(msg.MessageSentAt),
+            status: isMessageRead ? "read" : "delivered"
+          };
+        });
+      }
 
-        // Update conversation with fetched messages
-        const newConversation: Conversation = {
-          ...conversation,
-          messages: messages.reverse(), 
-          unreadCount: 0, // cập nhật lại nếu cần
-        }
-        // check unread count
-        if (conversation.unreadCount > 0) {
-          // update state messages
-          const data = {
-            room_id: conversation.id,
-            user_id: currentUser.id,
-          }
-          CallApiWithAuth.post(`/chat/set-status`, data)
-        }
-
-        setConversations((prev) =>
-          prev.map((c) => (c.id === conversation.id ? newConversation : c))
-        )
-        setMessages(messages)
-
-      } catch (error) {
-        console.error("Error fetching messages:", error)
-        toast({
-          title: "Error",
-          description: "Failed to load messages. Please try again.",
-          variant: "destructive",
-        })}
-      return
-    } else {
-      setMessages(conversation.messages)
+      newMessages.reverse();
+      if (conversation.unreadCount > 0) {
+        CallApiWithAuth.post(`/chat/set-status`, {
+          room_id: conversation.id,
+          user_id: currentUser.id,
+          last_message: acctiveConversationRef.current?.lastMessage?.id
+        }).catch(console.error); // Không block UI
+        handleSendReadStatus(conversation);
+      }
+      // Cập nhật messages
+      const updated = {
+        ...conversation,
+        messages: [...newMessages, ...(conversation.messages || [])],
+        unreadCount: 0
+      };
+      setMessages(newMessages);
+      setConversations((prev) =>
+        prev.map((c) => (c.id === conversation.id ? updated : c))
+      );
+    } catch (err) {
+      console.error("Error fetching messages:", err);
+      toast({
+        title: "Error",
+        description: "Failed to load messages. Please try again.",
+        variant: "destructive"
+      });
     }
 
+    // Đóng panel và loading
+    setIsEmotePanelOpen(false);
+    setIsNotificationPanelOpen(false);
+    setIsUserDiscoveryOpen(false);
+    setIsLoadingMessages(false);
 
-    // Close panels
-    setIsEmotePanelOpen(false)
-    setIsNotificationPanelOpen(false)
-    setIsUserDiscoveryOpen(false)
+    // Xóa conversation tạm
+    setConversations((prev) => prev.filter((c) => !c.isTemporary));
+  };
 
-    // remove temporary conversation
-    setConversations(prev => prev.filter(c => !c.isTemporary));
-  }
-
-  
   const handAddConversation = (user: User) => {
     // Check if conversation already exists
-    const existingConversation = conversations?.find((c) => c.user.id === user.id)
-    if (existingConversation && acctiveConversationRef.current?.user.id === user.id) {
-      setIsUserDiscoveryOpen(false)
-      return
+    const existingConversation = conversations?.find(
+      (c) => c.type === "private" && c.user.id === user.id
+    );
+    if (
+      existingConversation &&
+      acctiveConversationRef.current?.type === "private" &&
+      acctiveConversationRef.current?.user.id === user.id
+    ) {
+      setIsUserDiscoveryOpen(false);
+      return;
     }
 
     if (existingConversation) {
-      handleConversationChange(existingConversation)
-      setIsUserDiscoveryOpen(false)
-      return
+      handleConversationChange(existingConversation);
+      setIsUserDiscoveryOpen(false);
+      return;
     } else {
       // remove temporary conversation
-      setConversations(prev =>
-        prev.filter(c => !c.isTemporary || c.id === newConversation.id)
-      );
+      setConversations((prev) => prev.filter((c) => !c.isTemporary));
     }
     // Create a temporary conversation
-    const newConversation: Conversation = {
-      id: Date.now(), 
-      user: {
-        id: user.id,
-        name: user.name,
-        avatar: user.avatar || "/placeholder.svg?height=48&width=48",
-        status: user.status || "offline",
-      },
+    const newConversation: PrivateConversation = {
+      id: Date.now(), // Temporary ID
+      user: user,
       messages: [],
-      lastMessage: null, 
+      lastMessage: null,
       unreadCount: 0,
-      isTemporary: true, // Mark as temporary
-    }
+      isTemporary: true,
+      type: "private", // Add required property
+      name: user.name, // Add required property
+      avatar: user.avatar || "/placeholder.svg?height=48&width=48"
+    };
 
     // Add new conversation to state
-    setActiveConversation(newConversation)
-    setMessages([])
-    setConversations((prev) => [newConversation, ...prev])
+    setActiveConversation(newConversation);
+    setMessages([]);
+    setConversations((prev) => [newConversation, ...prev]);
+    setActiveTab("chats");
 
     // Close panels
-    setIsEmotePanelOpen(false)
-    setIsNotificationPanelOpen(false)
-    setIsUserDiscoveryOpen(false)
+    setIsEmotePanelOpen(false);
+    setIsNotificationPanelOpen(false);
+    setIsUserDiscoveryOpen(false);
     // Scroll to bottom of messages
-    scrollToBottom()
+    scrollToBottom();
+  };
 
-  }
-
-  
   // Scroll to bottom of messages
-  const scrollToBottom = () => { 
+  const scrollToBottom = () => {
     if (messagesEndRef.current) {
-        messagesEndRef.current.scrollIntoView({ behavior: "smooth" })
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }
+  };
 
-  const handleDataRoom = useCallback((): CreateRoomRequest => {
-  if (!activeConversation || !currentUser) return {
-    room_name: "",
-    room_create_by: 0,
-    room_is_group: false,
-    room_members: [],
-  }
+  const handleDataRoom = useCallback(
+    (conversation: PrivateConversation): CreateRoom => {
+      return {
+        room_id: conversation.id,
+        room_name: conversation.user.name + " - " + currentUser.name,
+        room_create_by: currentUser.id,
+        room_is_group: false,
+        room_avatar: "",
+        room_description: "",
+        room_members: [conversation.user.id, currentUser.id]
+      };
+    },
+    [activeConversation, currentUser]
+  );
 
-  return {
-    room_name: activeConversation.user.name + " - " + currentUser.name,
-    room_create_by: currentUser.id,
-    room_is_group: activeConversation.isGroup || false,
-    room_members: [activeConversation.user.id, currentUser.id],
-  }
-}, [activeConversation, currentUser])
+  const handleSendChangeStatus = React.useCallback(
+    (s: UserStatus) => {
+      if (!ws.current || ws.current.readyState !== WebSocket.OPEN) return;
 
+      const statusMessage: OnMessage = {
+        event: "status",
+        sender_id: currentUser.id,
+        receiver_ids: conversations.flatMap((c) => {
+          if (c.type === "private") {
+            return c.user.id;
+          } else if (c.type === "group") {
+            return c.participants.map((u) => u.id);
+          }
+          return [];
+        }),
+        status: s
+      };
 
-  const handleSendChangeStatus = (s: UserStatus) => {
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !activeConversation || !currentUser) return
-
-    const statusMessage: OnMessage = {
-      event: "status",
-      sender_id: currentUser.id,
-      receiver_ids: [conversations.map(c => c.user.id)].flat(),
-      status: s,
-    }
-
-    ws.current.send(JSON.stringify(statusMessage))
-  }
+      ws.current.send(JSON.stringify(statusMessage));
+    },
+    [conversations]
+  );
 
   // Handle sending a message
   const handleSendMessage = async (e: any) => {
-    e.preventDefault()
-    if (!message.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN || !activeConversation || !currentUser) return
+    e.preventDefault();
+    const currentConversation = acctiveConversationRef.current;
+    if (
+      !message.trim() ||
+      !ws.current ||
+      ws.current.readyState !== WebSocket.OPEN ||
+      !currentConversation
+    )
+      return;
 
-    let roomId = acctiveConversationRef.current?.id || activeConversation.id
-
-    if (acctiveConversationRef.current?.isTemporary) {
+    let roomId = currentConversation.id;
+    if (
+      currentConversation.isTemporary &&
+      currentConversation.type === "private"
+    ) {
       try {
-        const room = handleDataRoom()
-        const response = await CallApiWithAuth.post("/chat/create-room", room)
-        const data = response.data.data as CreateRoomResponse
-        roomId = data.room_id
+        const room = handleDataRoom(currentConversation as PrivateConversation);
+        const response = await CallApiWithAuth.post("/chat/create-room", room);
+        const data = response.data.data as CreateRoom;
+        roomId = data.room_id;
 
         setConversations((prev) => {
           return prev.map((c) => {
-            if (c.id === acctiveConversationRef.current?.id) {
+            if (c.id === currentConversation.id) {
               return {
                 ...c,
                 id: data.room_id,
                 isTemporary: false,
-                isGroup: data.room_is_group,
-              }
+                isGroup: data.room_is_group
+              };
             }
-            return c
-          })
-        })
-        setActiveConversation((prev) => prev ? ({
-          ...prev,
-          id: data.room_id,
-          isTemporary: false,
-          isGroup: data.room_is_group,
-        }) : null)
-        handleSendSubscribeTo([acctiveConversationRef.current?.user.id || activeConversation.user.id])
+            return c;
+          });
+        });
+        setActiveConversation((prev) =>
+          prev
+            ? {
+                ...prev,
+                id: data.room_id,
+                isTemporary: false,
+                isGroup: data.room_is_group
+              }
+            : null
+        );
+        handleSendSubscribeTo([currentConversation.user.id]);
       } catch (error) {
-        console.error("Error creating conversation:", error)
+        console.error("Error creating conversation:", error);
         toast({
           title: "Error",
           description: "Failed to create conversation. Please try again.",
-          variant: "destructive",
-        })
-        return
+          variant: "destructive"
+        });
+        return;
       }
     }
 
-    const currentTime = new Date()
+    const currentTime = new Date();
     const msg: OnMessage = {
       event: "message",
       sender_id: currentUser.id,
-      receiver_id: activeConversation.user.id,
-      type: activeConversation.isGroup ? "group" : "single",
       message: {
         id: 0, // Temporary ID, will be replaced by server
         room_id: roomId,
         sender_id: currentUser.id,
         sender_name: currentUser.name,
-        sender_avatar: currentUser.avatar || "/placeholder.svg?height=48&width=48",
+        sender_avatar:
+          currentUser.avatar || "/placeholder.svg?height=48&width=48",
         content: message,
         content_type: "text",
-        send_at: currentTime.toISOString(),
-      } as MessageRequest,
+        send_at: currentTime.toISOString()
+      } as MessageRequest
+    };
+
+    if (currentConversation.type === "group") {
+      msg.type = "group";
+      msg.receiver_ids = currentConversation.participants
+        .map((u) => u.id)
+        .filter((u) => u !== currentUser.id);
+    } else {
+      msg.type = "single";
+      msg.receiver_id = currentConversation.user.id;
     }
 
     try {
-      ws.current.send(JSON.stringify(msg))
+      ws.current.send(JSON.stringify(msg));
     } catch (error) {
-      console.error("Error sending message:", error)
+      console.error("Error sending message:", error);
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",
-        variant: "destructive",
-      })
+        variant: "destructive"
+      });
     }
 
     const newMessage: Message = {
@@ -676,83 +857,106 @@ export default function ImmersiveChatInterface() {
       content: message,
       sender: currentUser,
       timestamp: currentTime,
-      status: "sent", // Initial status before ack
+      status: "sent" // Initial status before ack
+    };
+
+    if (currentConversation.type === "group") {
+      newMessage.sender =
+        currentConversation.participants.find((u) => u.id === currentUser.id) ||
+        currentUser;
     }
 
-    setMessages((prev) => [
-      ...prev,
-      newMessage
-    ])
+    setMessages((prev) => [...prev, newMessage]);
 
     setConversations((prev) => {
-      return prev.map((c) => {
-        if (c.id === roomId) {
-          return {
-            ...c,
-            lastMessage: newMessage,
-            unreadCount: 0, // Reset unread count when sending a message
-          }
-        }
-        return c
-      })
-    })
+      const conv = prev.find((x) => x.id === roomId);
+      if (!conv) return prev;
+      const updatedMessages = [...(conv.messages || []), newMessage];
+      const updatedConv = {
+        ...conv,
+        messages: updatedMessages,
+        lastMessage: newMessage
+      };
 
-    setMessage("")
-  }
+      return [updatedConv, ...prev.filter((x) => x.id !== roomId)];
+    });
+
+    setMessage("");
+  };
 
   const handleSendSubscribeTo = (receiver_ids: number[]) => {
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !activeConversation || !currentUser) return
+    if (
+      !ws.current ||
+      ws.current.readyState !== WebSocket.OPEN ||
+      !acctiveConversationRef.current ||
+      !currentUser
+    )
+      return;
     const subscribeMessage: OnMessage = {
       event: "subscribe",
       sender_id: currentUser.id,
-      receiver_ids: receiver_ids,
-    }
+      receiver_ids: receiver_ids
+    };
 
-    ws.current.send(JSON.stringify(subscribeMessage))
-  }
-
+    ws.current.send(JSON.stringify(subscribeMessage));
+  };
 
   // handle send typing event
-  const lastSendTypingTimeRef = useRef<number>(0)
+  const lastSendTypingTimeRef = useRef<number>(0);
   const handleSendTyping = () => {
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN || !activeConversation || !currentUser) return
+    const currentConversation = acctiveConversationRef.current;
+    if (
+      !ws.current ||
+      ws.current.readyState !== WebSocket.OPEN ||
+      !currentConversation
+    )
+      return;
 
-    const currentTime = Date.now()
+    const currentTime = Date.now();
 
-    if(currentTime - lastSendTypingTimeRef.current < 1500) return
+    if (currentTime - lastSendTypingTimeRef.current < 1500) return;
 
-    lastSendTypingTimeRef.current = currentTime
+    lastSendTypingTimeRef.current = currentTime;
 
     const typingMessage: OnMessage = {
       event: "typing",
       sender_id: currentUser.id,
-      type: "multi",
-      receiver_ids: [acctiveConversationRef.current?.user.id || activeConversation.user.id],
+      type: "group",
       typing: {
-        room_id: acctiveConversationRef.current?.id || activeConversation.id,
+        room_id: currentConversation.id
       }
+    };
+    if (currentConversation.type === "group") {
+      typingMessage.receiver_ids = currentConversation.participants
+        .map((u) => u.id)
+        .filter((id) => id !== currentUser.id);
+    } else {
+      typingMessage.receiver_ids = [currentConversation.user.id];
     }
 
-    ws.current.send(JSON.stringify(typingMessage))
-  }
+    ws.current.send(JSON.stringify(typingMessage));
+  };
 
   // Handle sending an emote
   const handleSendEmote = (emote: any) => {
-    if (!emote) return
+    if (!emote) return;
     // Create new message with emote
     const newMessage = {
       id: Date.now(),
       content: emote,
       sender: currentUser,
       timestamp: new Date(),
-      isEmote: true,
-    }
+      isEmote: true
+    };
 
     // Add message to state
-    setMessages((prev) => [...prev, { ...newMessage, sender: currentUser as User }])
+    setMessages((prev) => [
+      ...prev,
+      { ...newMessage, sender: currentUser as User }
+    ]);
 
     // Close emote panel
-    setIsEmotePanelOpen(false)
+    setIsEmotePanelOpen(false);
 
     // Simulate reply after a delay
     setTimeout(() => {
@@ -760,66 +964,62 @@ export default function ImmersiveChatInterface() {
       const replyMessage = {
         id: Date.now() + 1, // Ensure unique ID
         content: getRandomEmote(),
-        sender: activeConversation?.user || currentUser,
+        sender:
+          (acctiveConversationRef.current?.type === "private" &&
+            acctiveConversationRef.current.user) ||
+          currentUser,
         timestamp: new Date(),
-        isEmote: true,
-      }
+        isEmote: true
+      };
 
       // Add reply to state
-      setMessages((prev) => [...prev, { ...replyMessage, sender: currentUser as User }])
-    }, 2000)
-  }
+      setMessages((prev) => [
+        ...prev,
+        { ...replyMessage, sender: currentUser as User }
+      ]);
+    }, 2000);
+  };
 
   // Handle marking all notifications as read
   const handleMarkAllAsRead = () => {
-    setNotifications(notifications.map((notification) => ({ ...notification, read: true })))
+    setNotifications(
+      notifications.map((notification) => ({ ...notification, read: true }))
+    );
     toast({
       title: "Notifications cleared",
       description: "All notifications have been marked as read",
-      variant: "success",
-    })
-  }
+      variant: "success"
+    });
+  };
 
   // Handle adding a new friend
   const handleAddFriend = (user: { name: string }) => {
     toast({
       title: "Friend request sent",
       description: `Your friend request to ${user.name} has been sent`,
-      variant: "success",
-    })
-  }
-
+      variant: "success"
+    });
+  };
 
   // Get random emote
   const getRandomEmote = () => {
-    const emotes = ["😊", "👍", "❤️", "😂", "🎉", "🙌", "👏", "🔥"]
-    if (emotes.length === 0) return "👍"
-    return emotes[Math.floor(Math.random() * emotes.length)]
-  }
+    const emotes = ["😊", "👍", "❤️", "😂", "🎉", "🙌", "👏", "🔥"];
+    if (emotes.length === 0) return "👍";
+    return emotes[Math.floor(Math.random() * emotes.length)];
+  };
 
   // Count unread notifications
-  const unreadNotificationsCount = notifications.filter((n) => !n.read).length
+  const unreadNotificationsCount = notifications.filter((n) => !n.read).length;
 
   return (
     <TooltipProvider>
-      <div className="h-full flex flex-col">
+      <div className="h-full w-full flex flex-col">
         {/* Header */}
-        <div className="h-16 bg-[#1e1f2e]/90 backdrop-blur-md border-b border-white/10 flex items-center px-4 justify-between">
+        <div className="h-16 bg-[#1e1f2e]/90 backdrop-blur-md border-b border-white/10 flex items-center px-4 justify-between z-10">
           <div className="flex items-center">
-            {isMobile && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="mr-2 text-gray-400 hover:text-white"
-              >
-                {isSidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </Button>
-            )}
-
             <div className="flex items-center">
               <MessageSquare className="h-6 w-6 text-indigo-500 mr-2" />
-              <h1 className="text-white font-medium text-lg">Vizify Chat</h1>
+              <h1 className="text-white font-medium text-lg">Chat Hub</h1>
             </div>
           </div>
 
@@ -834,11 +1034,11 @@ export default function ImmersiveChatInterface() {
                     toast({
                       title: "Search",
                       description: "Search functionality coming soon!",
-                      variant: "info",
-                    })
+                      variant: "info"
+                    });
                   }}
                 >
-                  <Search className="h-5 w-5"/>
+                  <Search className="h-5 w-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Search</TooltipContent>
@@ -851,11 +1051,10 @@ export default function ImmersiveChatInterface() {
                   size="icon"
                   className="text-gray-400 hover:text-white relative"
                   onClick={() => {
-                    setIsNotificationPanelOpen(!isNotificationPanelOpen)
-                    setIsEmotePanelOpen(false)
-                    setIsUserDiscoveryOpen(false)
+                    setIsNotificationPanelOpen(!isNotificationPanelOpen);
+                    setIsEmotePanelOpen(false);
+                    setIsUserDiscoveryOpen(false);
                   }}
-                
                 >
                   <Bell className="h-5 w-5" />
                   {unreadNotificationsCount > 0 && (
@@ -873,14 +1072,13 @@ export default function ImmersiveChatInterface() {
                   size="icon"
                   className="text-gray-400 hover:text-white"
                   onClick={() => {
-                    setIsUserDiscoveryOpen(!isUserDiscoveryOpen)
-                    setIsEmotePanelOpen(false)
-                    setIsNotificationPanelOpen(false)
+                    setIsUserDiscoveryOpen(!isUserDiscoveryOpen);
+                    setIsEmotePanelOpen(false);
+                    setIsNotificationPanelOpen(false);
                   }}
                 >
                   <UserPlus className="h-5 w-5" />
                 </Button>
-        
               </TooltipTrigger>
               <TooltipContent>Discover Users</TooltipContent>
             </TooltipRoot>
@@ -895,8 +1093,8 @@ export default function ImmersiveChatInterface() {
                     toast({
                       title: "Settings",
                       description: "Settings panel coming soon!",
-                      variant: "info",
-                    })
+                      variant: "info"
+                    });
                   }}
                 >
                   <Settings className="h-5 w-5" />
@@ -918,229 +1116,63 @@ export default function ImmersiveChatInterface() {
           {/* Sidebar */}
           <AnimatePresence>
             {isSidebarOpen && (
-              <motion.div
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: "320px", opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                className={`h-full bg-[#1a1b26]/90 backdrop-blur-md border-r border-white/10 flex flex-col ${
-                  isMobile ? "absolute inset-y-0 left-0 z-50 w-full" : "relative"
-                }`}
-              >
-                {/* Sidebar tabs */}
-                <Tabs
-                  defaultValue="chats"
-                  value={activeTab}
-                  onValueChange={setActiveTab}
-                  className="h-full flex flex-col"
-                >
-                  <div className="px-2 pt-2">
-                    <TabsList className="w-full bg-[#1e1f2e]">
-                      <TabsTrigger value="chats" className="flex-1 rounded-[6px] data-[state=active]:bg-indigo-500">
-                        <MessageSquare className="h-4 w-4 mr-2 " />
-                        Chats
-                      </TabsTrigger>
-                      <TabsTrigger value="groups" className="flex-1 rounded-[6px] data-[state=active]:bg-indigo-500">
-                        <Users className="h-4 w-4 mr-2" />
-                        Groups
-                      </TabsTrigger>
-                      <TabsTrigger value="saved" className="flex-1 rounded-[6px] data-[state=active]:bg-indigo-500">
-                        <Bookmark className="h-4 w-4 mr-2" />
-                        Saved
-                      </TabsTrigger>
-                    </TabsList>
-                  </div>
-
-                  <div className="p-3">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                      <Input
-                        placeholder={`Search ${activeTab}...`}
-                        className="pl-9 bg-[#1e1f2e] border-white/10 text-white"
-                      />
-                    </div>
-                  </div>
- 
-                  <TabsContent value="chats" className="flex flex-col overflow-auto">
-                      <div className="p-2 space-y-1">
-                        {
-                          (conversations.length > 0 ? conversations?.map((conversation) => (
-                            <ConversationItem
-                              key={conversation.id}
-                              conversation={conversation}
-                              isActive={activeConversation?.id === conversation.id}
-                              onClick={() => handleConversationChange(conversation)}
-                            />
-                          )) : (
-                            <div className="text-center text-gray-400 p-4">
-                              <MessageSquare className="h-12 w-12 mx-auto mb-2 text-gray-500" />
-                              <h3 className="text-lg font-medium text-white mb-1">No Conversations Yet</h3>
-                              <p className="text-sm">Start chatting with someone to see your conversations here.</p>
-                            </div>
-                          ))
-
-                        }
-                      </div>
-                  </TabsContent>
-
-                  <TabsContent value="groups" className="flex-1 overflow-hidden flex flex-col mt-0">
-                    <ScrollArea className="flex-1 ">
-                      <div className="p-4 text-center text-gray-400">
-                        <Hash className="h-12 w-12 mx-auto mb-2 text-gray-500" />
-                        <h3 className="text-lg font-medium text-white mb-1">No Groups Yet</h3>
-                        <p className="text-sm mb-4">
-                          Create or join a group to start chatting with multiple people at once.
-                        </p>
-                        <Button
-                          className="bg-indigo-600 hover:bg-indigo-700 text-white"
-                          onClick={() => {
-                            toast({
-                              title: "Create Group",
-                              description: "Group creation coming soon!",
-                              variant: "info",
-                            })
-                          }}
-                        >
-                          <Users className="h-4 w-4 mr-2" />
-                          Create Group
-                        </Button>
-                      </div>
-                    </ScrollArea>
-                  </TabsContent>
-
-                  <TabsContent value="saved" className="flex-1 overflow-hidden flex flex-col mt-0">
-                    <ScrollArea className="flex-1">
-                      <div className="p-4 text-center text-gray-400">
-                        <Bookmark className="h-12 w-12 mx-auto mb-2 text-gray-500" />
-                        <h3 className="text-lg font-medium text-white mb-1">No Saved Messages</h3>
-                        <p className="text-sm">Bookmark important messages to find them easily later.</p>
-                      </div>
-                    </ScrollArea>
-                  </TabsContent>
-
-                  {/* User profile */}
-                  <div className="p-3 border-t border-white/10 bg-[#1e1f2e]/50">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Avatar className="h-10 w-10 mr-3 border-2 border-indigo-500/50">
-                          <img src="/placeholder.svg?height=40&width=40" alt={currentUser?.name} />
-                        </Avatar>
-                        <div>
-                          <div className="text-white font-medium">{currentUser?.name}</div>
-                          <div className="text-xs text-gray-400 flex items-center">
-                            <span className="w-2 h-2 rounded-full bg-green-500 mr-1"></span>
-                            Online
-                          </div>
-                        </div>
-                      </div>
-
-                      <TooltipRoot>
-                        <TooltipTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-gray-400 hover:text-red-400"
-                            onClick={() => {
-                              toast({
-                                title: "Logout",
-                                description: "Logout functionality coming soon!",
-                                variant: "info",
-                              })
-                            }}
-                          >
-                            <LogOut className="h-5 w-5" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Logout</TooltipContent>
-                      </TooltipRoot>
-                    </div>
-                  </div>
-                </Tabs>
-              </motion.div>
+              <ChatSidebar
+                isMobile={isMobile}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                setIsOpenCreateGroupModal={setIsOpenCreateGroupModal}
+                conversations={conversations}
+                isLoadingConversations={isLoadingConversations}
+                activeConversation={activeConversation}
+                handleConversationChange={handleConversationChange}
+                currentUser={currentUser}
+                toast={toast}
+                ws={ws}
+              />
             )}
           </AnimatePresence>
 
           {/* Chat area */}
-          <div className="flex-1 flex flex-col bg-gradient-to-b from-[#1e1f2e]/70 to-[#1a1b26]/70 backdrop-blur-md relative">
+          <div className=" flex-1 flex flex-col bg-gradient-to-b from-[#1e1f2e]/70 to-[#1a1b26]/70 backdrop-blur-md relative">
             {activeConversation ? (
               <>
                 {/* Chat header */}
-                <div className="h-16 border-b border-white/10 flex items-center justify-between px-4">
-                  <div className="flex items-center">
-                    <div className="relative mr-3">
-                      <Avatar className="h-10 w-10">
-                        <img
-                          src={activeConversation.user.avatar || "/placeholder.svg?height=40&width=40"}
-                          alt={activeConversation.user.name}
-                        />
-                      </Avatar>
-                      <span
-                        className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1e1f2e] ${
-                          activeConversation.user.status === "online"
-                            ? "bg-green-500"
-                            : activeConversation.user.status === "away"
-                              ? "bg-yellow-500"
-                              : "bg-gray-500"
-                        }`}
-                      ></span>
-                    </div>
-                    <div>
-                      <h2 className="text-white font-medium">{activeConversation.user.name}</h2>
-                      <p className="text-xs text-gray-400">
-                        {activeConversation.user.status === "online"
-                          ? "Online"
-                          : activeConversation.user.status === "away"
-                            ? "Away"
-                            : "Offline"}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-1">
-                    <TooltipRoot>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-                          <Phone className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Voice Call</TooltipContent>
-                    </TooltipRoot>
-
-                    <TooltipRoot>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-                          <Video className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Video Call</TooltipContent>
-                    </TooltipRoot>
-
-                    <TooltipRoot>
-                      <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
-                          <MoreHorizontal className="h-5 w-5" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>More Options</TooltipContent>
-                    </TooltipRoot>
-                  </div>
-                </div>
+                <ChatHeader
+                  activeConversation={activeConversation}
+                  isLoadingMessages={isLoadingMessages}
+                  setIsSidebarOpen={setIsSidebarOpen}
+                  isSidebarOpen={isSidebarOpen}
+                  isMobile={isMobile}
+                />
 
                 {/* Chat messages */}
                 <div className="flex-1 overflow-hidden relative">
-                  <ChatMessages
-                    messages={messages}
-                    currentUser={currentUser}
-                    receiverUser={activeConversation.user}
-                    isTyping={isTyping}
-                    typingUser={activeConversation.user}
-                    messagesEndRef={messagesEndRef}
-                  />
-                </div>  
+                  {isLoadingMessages ? (
+                    <ChatMessagesSkeleton />
+                  ) : activeConversation.type === "private" ? (
+                    <ChatMessages
+                      messages={messages}
+                      currentUser={currentUser}
+                      receiverUser={activeConversation.user}
+                      typingUsers={typingUsers}
+                      messagesEndRef={messagesEndRef}
+                    />
+                  ) : (
+                    <GroupChatMessages
+                      messages={messages}
+                      currentUser={currentUser}
+                      typingUsers={typingUsers}
+                      messagesEndRef={messagesEndRef}
+                    />
+                  )}
+                </div>
 
                 {/* Chat input */}
                 <div className="p-4 border-t border-white/10">
-                  <form onSubmit={handleSendMessage} className="flex items-end gap-2">
+                  <form
+                    onSubmit={handleSendMessage}
+                    className="flex items-end gap-2"
+                  >
                     <div className="flex-1 bg-[#1e1f2e] rounded-[6px] border border-white/10 overflow-hidden">
                       <div className="flex items-center px-3 py-2 border-b border-white/5">
                         <TooltipRoot>
@@ -1172,7 +1204,6 @@ export default function ImmersiveChatInterface() {
                         </TooltipRoot>
 
                         <TooltipRoot>
-
                           <TooltipTrigger asChild>
                             <Button
                               type="button"
@@ -1194,9 +1225,9 @@ export default function ImmersiveChatInterface() {
                               size="icon"
                               className="h-8 w-8 text-gray-400 hover:text-white"
                               onClick={() => {
-                                setIsEmotePanelOpen(!isEmotePanelOpen)
-                                setIsNotificationPanelOpen(false)
-                                setIsUserDiscoveryOpen(false)
+                                setIsEmotePanelOpen(!isEmotePanelOpen);
+                                setIsNotificationPanelOpen(false);
+                                setIsUserDiscoveryOpen(false);
                               }}
                             >
                               <Smile className="h-5 w-5" />
@@ -1209,10 +1240,14 @@ export default function ImmersiveChatInterface() {
                       <textarea
                         value={message}
                         onChange={(e) => {
-                          setMessage(e.target.value)
-                          handleSendTyping()
+                          setMessage(e.target.value);
+                          handleSendTyping();
                         }}
-                        placeholder={`Message ${activeConversation.user.name}...`}
+                        placeholder={`Message ${
+                          activeConversation.type === "private"
+                            ? activeConversation.user.name
+                            : activeConversation.name
+                        }...`}
                         className="w-full bg-transparent border-none px-4 py-3 text-white placeholder-gray-500 focus:outline-none resize-none h-20 "
                       />
                     </div>
@@ -1221,7 +1256,9 @@ export default function ImmersiveChatInterface() {
                       type="submit"
                       disabled={!message.trim()}
                       className={`rounded-full p-3 ${
-                        message.trim() ? "bg-indigo-600 hover:bg-indigo-700" : "bg-indigo-600/50 cursor-not-allowed"
+                        message.trim()
+                          ? "bg-indigo-600 hover:bg-indigo-700"
+                          : "bg-indigo-600/50 cursor-not-allowed"
                       }`}
                     >
                       <Send className="h-5 w-5" />
@@ -1235,9 +1272,12 @@ export default function ImmersiveChatInterface() {
                   <div className="w-20 h-20 bg-indigo-500/20 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse-slow">
                     <MessageSquare className="h-10 w-10 text-indigo-400" />
                   </div>
-                  <h3 className="text-2xl font-semibold text-white mb-3 glow-text">Select a Conversation</h3>
+                  <h3 className="text-2xl font-semibold text-white mb-3 glow-text">
+                    Select a Conversation
+                  </h3>
                   <p className="text-gray-400 mb-6">
-                    Choose a conversation from the sidebar or start a new chat to begin messaging
+                    Choose a conversation from the sidebar or start a new chat
+                    to begin messaging
                   </p>
                   {isMobile && !isSidebarOpen && (
                     <Button
@@ -1263,7 +1303,10 @@ export default function ImmersiveChatInterface() {
                 transition={{ duration: 0.2 }}
                 className="absolute bottom-24 right-16 z-50"
               >
-                <EmotePanel onSelectEmote={handleSendEmote} onClose={() => setIsEmotePanelOpen(false)} />
+                <EmotePanel
+                  onSelectEmote={handleSendEmote}
+                  onClose={() => setIsEmotePanelOpen(false)}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -1297,12 +1340,104 @@ export default function ImmersiveChatInterface() {
                 transition={{ duration: 0.2 }}
                 className="absolute top-16 right-16 z-50"
               >
-                <UserDiscovery onClose={() => setIsUserDiscoveryOpen(false)} onAddFriend={handleAddFriend} onAddConversation={handAddConversation}/>
+                <UserDiscovery
+                  onClose={() => setIsUserDiscoveryOpen(false)}
+                  onAddFriend={handleAddFriend}
+                  onAddConversation={handAddConversation}
+                />
               </motion.div>
             )}
           </AnimatePresence>
+          {isOpenCreateGroupModal && (
+            <GroupCreationModal
+              isOpen={isOpenCreateGroupModal}
+              onClose={() => setIsOpenCreateGroupModal(false)}
+              onCreateGroup={async (groupData) => {
+                try {
+                  // Implement group creation logic here
+                  const newRoom: CreateRoom = {
+                    room_id: 0, // This will be set by the server
+                    room_name: groupData.name,
+                    room_avatar: groupData.avatar || "",
+                    room_description: groupData.description,
+                    room_create_by: currentUser.id,
+                    room_is_group: true,
+                    room_members: groupData.participants.map((u) => u.id)
+                  };
+
+                  const response = await CallApiWithAuth.post(
+                    "/chat/create-room",
+                    newRoom
+                  );
+                  const data = response.data.data as CreateRoom;
+
+                  // create new group conversation
+                  const newGroupConversation: GroupConversation = {
+                    id: data.room_id,
+                    name: data.room_name,
+                    avatar:
+                      data.room_avatar || "/placeholder.svg?height=48&width=48",
+                    description: data.room_description || "",
+                    participants: groupData.participants,
+                    messages: [],
+                    lastMessage: {
+                      id: data.room_message_id || 0,
+                      content: "Welcome to the group!",
+                      sender: currentUser,
+                      timestamp: new Date(),
+                      status: "sent",
+                      type: "text"
+                    } as Message,
+                    unreadCount: 1,
+                    isTemporary: false,
+                    type: "group",
+                    createdBy: currentUser,
+                    createdAt: new Date(),
+                    cuurrentLastSeen: 0 // Set to 0 or current timestamp
+                  };
+
+                  // send new group
+                  ws.current?.send(
+                    JSON.stringify({
+                      event: "room_created",
+                      type: "group",
+                      sender_id: currentUser.id,
+                      receiver_ids: groupData.participants
+                        .map((u) => u.id)
+                        .filter((id) => id !== currentUser.id),
+                      room: newGroupConversation
+                    } as OnMessage)
+                  );
+
+                  setConversations((prev) => [newGroupConversation, ...prev]);
+
+                  toast({
+                    title: "Group Created",
+                    description: `Group "${groupData.name}" has been successfully created.`,
+                    variant: "success"
+                  });
+                } catch (error) {
+                  console.error("Error creating group:", error);
+                  toast({
+                    title: "Error",
+                    description: "Failed to create group. Please try again.",
+                    variant: "destructive"
+                  });
+                }
+              }}
+              availableUsers={[
+                ...conversations.flatMap((c) => {
+                  if (c.type === "private") {
+                    return c.user;
+                  }
+                  return [];
+                })
+              ]}
+              currentUser={currentUser}
+            />
+          )}
         </div>
       </div>
     </TooltipProvider>
-  )
+  );
 }

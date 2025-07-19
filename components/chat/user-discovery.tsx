@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,8 @@ import { Avatar } from "@/components/ui/avatar"
 import { Search, UserPlus, X, Users } from "lucide-react"
 import { CallApiWithAuth } from "@/config/axios.config"
 import { UserInfo } from "@/types/user"
+import { UserDiscoverySkeleton } from "./skeleton-loaders"
+import { set } from "react-hook-form"
 
 
 type User = {
@@ -31,6 +33,7 @@ export default function UserDiscovery({ onClose, onAddFriend, onAddConversation 
   const [suggestedUsers, setSuggestedUsers] = useState<User[]>([])
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null)
   const [firstSuggestedUsers, setFirstSuggestedUsers] = useState<User[] | null>(null)
+  const [isLoadingUserDiscovery, setIsLoadingUserDiscovery] = useState(true)
 
   useEffect(() => {
     if (firstSuggestedUsers) {
@@ -54,6 +57,7 @@ export default function UserDiscovery({ onClose, onAddFriend, onAddConversation 
         } catch (error) {
           console.error("Error fetching user data:", error)
         }
+        setIsLoadingUserDiscovery(false)
       }
 
     fetchData()
@@ -65,6 +69,7 @@ export default function UserDiscovery({ onClose, onAddFriend, onAddConversation 
       return
     }
 
+    setIsLoadingUserDiscovery(true)
     try {
       const response = await CallApiWithAuth.get(`/user/search?username=${query}`)
       console.log("Search response:", response.data.data)
@@ -80,6 +85,7 @@ export default function UserDiscovery({ onClose, onAddFriend, onAddConversation 
     } catch (error) {
       console.error("Error searching users:", error)
     }
+    setIsLoadingUserDiscovery(false)
   }
   
   const handleInputChange = (query: string) => {
@@ -122,12 +128,36 @@ export default function UserDiscovery({ onClose, onAddFriend, onAddConversation 
         </div>
       </div>
 
-      <ScrollArea className="h-80">
+      {
+        isLoadingUserDiscovery ? <UserDiscoverySkeleton /> :
+        <ScrollArea className="h-80">
         {suggestedUsers.length > 0 ? (
           <div className="p-2">
             {suggestedUsers.map((user) => (
-              <motion.div
+              <UserDiscoveryItem
                 key={user.id}
+                user={user}
+                onAddFriend={onAddFriend}
+                onAddConversation={onAddConversation}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="p-8 text-center text-gray-400">
+            <Search className="h-12 w-12 mx-auto mb-2 text-gray-500" />
+            <h3 className="text-lg font-medium text-white mb-1">No Users Found</h3>
+            <p className="text-sm">Try a different search term</p>
+          </div>
+        )}
+      </ScrollArea>
+      }
+    </Card>
+  )
+}
+
+const UserDiscoveryItem = React.memo(({ user, onAddFriend, onAddConversation }: { user: User; onAddFriend: (user: User) => void; onAddConversation?: (user: User) => void }) => {
+  return (
+    <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="p-3 rounded-lg hover:bg-white/5 transition-colors"
@@ -173,16 +203,5 @@ export default function UserDiscovery({ onClose, onAddFriend, onAddConversation 
                   </Button>
                 </div>
               </motion.div>
-            ))}
-          </div>
-        ) : (
-          <div className="p-8 text-center text-gray-400">
-            <Search className="h-12 w-12 mx-auto mb-2 text-gray-500" />
-            <h3 className="text-lg font-medium text-white mb-1">No Users Found</h3>
-            <p className="text-sm">Try a different search term</p>
-          </div>
-        )}
-      </ScrollArea>
-    </Card>
   )
-}
+})

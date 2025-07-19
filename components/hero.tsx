@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
-import { motion } from "framer-motion"
-import { Users, MessageCircle, ChevronRight } from "lucide-react"
-import { FloatingIcons } from "@/components/floating-icons"
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import { Users, MessageCircle, ChevronRight } from "lucide-react";
+import { FloatingIcons } from "@/components/floating-icons";
 
 export default function Hero() {
   return (
@@ -21,7 +21,7 @@ export default function Hero() {
             transition={{ duration: 0.5 }}
             className="inline-block px-6 py-2 bg-indigo-500/20 rounded-full mb-6"
           >
-            <span className="text-indigo-300 font-medium">Join HarmonyHub</span>
+            <span className="text-indigo-300 font-medium">Join CommuniHub</span>
           </motion.div>
 
           <motion.div
@@ -44,8 +44,9 @@ export default function Hero() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-gray-400 text-xl mb-8 max-w-2xl mx-auto"
           >
-            Join thousands of communities and connect with people who share your interests. Real-time chat, voice
-            channels, and a vibrant community await you.
+            Join thousands of communities and connect with people who share your
+            interests. Real-time chat, voice channels, and a vibrant community
+            await you.
           </motion.p>
 
           <motion.div
@@ -54,11 +55,18 @@ export default function Hero() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <Button size="lg" className="bg-indigo-600 hover:bg-indigo-700 text-white px-8">
+            <Button
+              size="lg"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-8"
+            >
               <Users className="mr-2 h-5 w-5" />
               Join Community
             </Button>
-            <Button size="lg" variant="outline" className="text-white border-indigo-500 hover:bg-indigo-500/20">
+            <Button
+              size="lg"
+              variant="outline"
+              className="text-white border-indigo-500 hover:bg-indigo-500/20"
+            >
               <MessageCircle className="mr-2 h-5 w-5" />
               Explore Channels
             </Button>
@@ -81,5 +89,5 @@ export default function Hero() {
         </div>
       </div>
     </div>
-  )
+  );
 }

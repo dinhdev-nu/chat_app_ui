@@ -1,21 +1,24 @@
 "use client";
-import { Conversation, PrivateConversation } from "@/types/chat";
 import { Badge } from "@/components/ui/badge";
 import { Avatar } from "@/components/ui/avatar";
 import React from "react";
+import { Users } from "lucide-react";
+import { GroupConversation } from "@/types/chat";
 
 interface ConversationItemProps {
-  conversation: PrivateConversation;
+  conversation: GroupConversation;
   isActive: boolean;
   onClick: () => void;
 }
 
-function ConversationItem({
+function GroupConversationItem({
   conversation,
   isActive,
   onClick
-}: ConversationItemProps) {
-  const { user, lastMessage, unreadCount } = conversation;
+}: //   onClick
+ConversationItemProps) {
+  const { name, avatar, lastMessage, unreadCount, participants } = conversation;
+  const onlineCount = participants.filter((p) => p.status === "online").length;
 
   return (
     <div
@@ -29,17 +32,13 @@ function ConversationItem({
         <div className="relative shrink-0">
           <Avatar className="h-12 w-12">
             <img
-              src={user.avatar || "/placeholder.svg?height=48&width=48"}
-              alt={user.name}
+              src={avatar || "/placeholder.svg?height=48&width=48"}
+              alt={name}
             />
           </Avatar>
           <span
             className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#1a1b26] ${
-              user.status === "online"
-                ? "bg-green-500"
-                : user.status === "away"
-                ? "bg-yellow-500"
-                : "bg-gray-500"
+              onlineCount > 1 ? "bg-green-500" : "bg-gray-500"
             }`}
           ></span>
         </div>
@@ -52,22 +51,35 @@ function ConversationItem({
                 isActive ? "text-white" : "text-gray-300"
               }`}
             >
-              {user.name}
+              {name}
             </h3>
-            <span className="text-xs text-gray-500 shrink-0">
-              {new Date(
-                lastMessage?.timestamp ?? new Date().getTime()
-              ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-            </span>
+            <div className="flex gap-3 items-center text-xs text-gray-500 ml-2">
+              <span className="text-xs text-gray-500 shrink-0">
+                {lastMessage &&
+                  new Date(
+                    lastMessage?.timestamp ?? new Date().getTime()
+                  ).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })}
+              </span>
+              <div className="flex items-center gap-0">
+                <Users className="h-3 w-3 mr-1" />
+                {conversation.participants.length}
+              </div>
+            </div>
           </div>
-
           {/* If unreadCount highlight text and change size */}
           <p
             className={`text-sm text-gray-400 truncate ${
               unreadCount > 0 ? "font-semibold text-white" : ""
             }`}
           >
-            {lastMessage ? lastMessage.content : "No messages yet"}
+            {lastMessage
+              ? lastMessage.sender.name +
+                ":" +
+                lastMessage.content.replace("[system]", "")
+              : "No messages yet"}
           </p>
         </div>
 
@@ -82,4 +94,4 @@ function ConversationItem({
   );
 }
 
-export default React.memo(ConversationItem);
+export default React.memo(GroupConversationItem);

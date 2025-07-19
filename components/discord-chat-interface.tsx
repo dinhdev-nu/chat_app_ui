@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { useMediaQuery } from "@/hooks/use-media-query"
+import { useState, useRef, useEffect } from "react";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   Hash,
   Volume2,
@@ -37,211 +37,119 @@ import {
   Heart,
   Star,
   CheckCheck,
-  Send,
-} from "lucide-react"
-import { Avatar } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Tooltip, TooltipProvider } from "@/components/ui/tooltip"
-import { Separator } from "@/components/ui/separator"
-import { ScrollArea } from "@/components/ui/scroll-area"
+  Send
+} from "lucide-react";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipProvider } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function DiscordChatInterface() {
-  const [selectedServer, setSelectedServer] = useState<string>("harmony")
-  const [selectedCategory, setSelectedCategory] = useState<string>("general")
-  const [selectedChannel, setSelectedChannel] = useState<string>("welcome")
-  const [selectedDM, setSelectedDM] = useState<string | null>(null)
-  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+  const [selectedServer, setSelectedServer] = useState<string>("harmony");
+  const [selectedCategory, setSelectedCategory] = useState<string>("general");
+  const [selectedChannel, setSelectedChannel] = useState<string>("welcome");
+  const [selectedDM, setSelectedDM] = useState<string | null>(null);
+  const [expandedCategories, setExpandedCategories] = useState<
+    Record<string, boolean>
+  >({
     general: true,
     community: true,
-    voice: true,
-  })
-  const [showNewConversationModal, setShowNewConversationModal] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
-  const [message, setMessage] = useState("")
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false)
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
+    voice: true
+  });
+  const [showNewConversationModal, setShowNewConversationModal] =
+    useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [message, setMessage] = useState("");
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
-  const isMobile = useMediaQuery("(max-width: 768px)")
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Scroll to bottom when messages change
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [selectedChannel, selectedDM])
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [selectedChannel, selectedDM]);
 
   // Toggle category expansion
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) => ({
       ...prev,
-      [category]: !prev[category],
-    }))
-  }
+      [category]: !prev[category]
+    }));
+  };
 
   // Handle channel selection
   const handleChannelSelect = (category: string, channel: string) => {
-    setSelectedCategory(category)
-    setSelectedChannel(channel)
-    setSelectedDM(null)
+    setSelectedCategory(category);
+    setSelectedChannel(channel);
+    setSelectedDM(null);
     if (isMobile) {
-      setIsMobileSidebarOpen(false)
+      setIsMobileSidebarOpen(false);
     }
-  }
+  };
 
   // Handle DM selection
   const handleDMSelect = (userName: string) => {
-    setSelectedDM(userName)
-    setSelectedChannel("")
-    setSelectedCategory("")
+    setSelectedDM(userName);
+    setSelectedChannel("");
+    setSelectedCategory("");
     if (isMobile) {
-      setIsMobileSidebarOpen(false)
+      setIsMobileSidebarOpen(false);
     }
-  }
+  };
 
   // Handle server selection
   const handleServerSelect = (server: string) => {
-    setSelectedServer(server)
-    setSelectedCategory("general")
-    setSelectedChannel("welcome")
-    setSelectedDM(null)
-  }
+    setSelectedServer(server);
+    setSelectedCategory("general");
+    setSelectedChannel("welcome");
+    setSelectedDM(null);
+  };
 
   // Function to open new conversation modal
   const openNewConversation = () => {
-    setShowNewConversationModal(true)
-  }
+    setShowNewConversationModal(true);
+  };
 
   // Function to close new conversation modal
   const closeNewConversation = () => {
-    setShowNewConversationModal(false)
-    setSearchQuery("")
-  }
+    setShowNewConversationModal(false);
+    setSearchQuery("");
+  };
 
   // Function to start a new conversation
   const startNewConversation = (userName: string) => {
-    setSelectedDM(userName)
-    setSelectedChannel("")
-    setSelectedCategory("")
-    closeNewConversation()
-  }
+    setSelectedDM(userName);
+    setSelectedChannel("");
+    setSelectedCategory("");
+    closeNewConversation();
+  };
 
   // Handle message submission
   const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (message.trim()) {
       // In a real app, you would send the message to the server here
-      console.log("Sending message:", message)
-      setMessage("")
+      console.log("Sending message:", message);
+      setMessage("");
     }
-  }
+  };
 
   return (
     <TooltipProvider>
       <div className="h-screen w-full bg-[#1e1f2e] flex overflow-hidden">
-        {/* Server sidebar */}
-        <div
-          className={`w-[72px] bg-[#1a1b26] flex-shrink-0 flex flex-col items-center py-3 border-r border-black/20 ${isMobile ? "hidden" : "flex"}`}
-        >
-          <div className="w-full px-3 mb-2">
-            <Tooltip content="Home">
-              <button
-                onClick={() => handleServerSelect("home")}
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-2 transition-all hover:rounded-xl ${
-                  selectedServer === "home"
-                    ? "bg-indigo-500 text-white"
-                    : "bg-[#2d2f3e] text-indigo-400 hover:bg-indigo-500/80 hover:text-white"
-                }`}
-              >
-                <Home className="h-5 w-5" />
-              </button>
-            </Tooltip>
-
-            <Separator className="my-2 bg-[#2d2f3e]" />
-          </div>
-
-          {/* Server list */}
-          <ScrollArea className="flex-1 w-full px-3">
-            <div className="space-y-2">
-              <Tooltip content="HarmonyHub">
-                <button
-                  onClick={() => handleServerSelect("harmony")}
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all hover:rounded-xl ${
-                    selectedServer === "harmony"
-                      ? "bg-indigo-500 text-white"
-                      : "bg-[#2d2f3e] text-indigo-400 hover:bg-indigo-500/80 hover:text-white"
-                  }`}
-                >
-                  <MessageSquare className="h-5 w-5" />
-                </button>
-              </Tooltip>
-
-              <Tooltip content="Developers">
-                <button
-                  onClick={() => handleServerSelect("developers")}
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all hover:rounded-xl ${
-                    selectedServer === "developers"
-                      ? "bg-indigo-500 text-white"
-                      : "bg-[#2d2f3e] text-indigo-400 hover:bg-indigo-500/80 hover:text-white"
-                  }`}
-                >
-                  <Code className="h-5 w-5" />
-                </button>
-              </Tooltip>
-
-              <Tooltip content="Gaming">
-                <button
-                  onClick={() => handleServerSelect("gaming")}
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all hover:rounded-xl ${
-                    selectedServer === "gaming"
-                      ? "bg-indigo-500 text-white"
-                      : "bg-[#2d2f3e] text-indigo-400 hover:bg-indigo-500/80 hover:text-white"
-                  }`}
-                >
-                  <Gamepad2 className="h-5 w-5" />
-                </button>
-              </Tooltip>
-
-              <Tooltip content="Art & Design">
-                <button
-                  onClick={() => handleServerSelect("design")}
-                  className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all hover:rounded-xl ${
-                    selectedServer === "design"
-                      ? "bg-indigo-500 text-white"
-                      : "bg-[#2d2f3e] text-indigo-400 hover:bg-indigo-500/80 hover:text-white"
-                  }`}
-                >
-                  <Palette className="h-5 w-5" />
-                </button>
-              </Tooltip>
-            </div>
-
-            <Separator className="my-2 bg-[#2d2f3e]" />
-
-            <Tooltip content="Add a Server">
-              <button className="w-12 h-12 rounded-full bg-[#2d2f3e] flex items-center justify-center text-green-400 hover:bg-green-500 hover:text-white transition-all">
-                <Plus className="h-5 w-5" />
-              </button>
-            </Tooltip>
-
-            <Tooltip content="Explore Servers">
-              <button className="w-12 h-12 rounded-full bg-[#2d2f3e] flex items-center justify-center text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all mt-2">
-                <Compass className="h-5 w-5" />
-              </button>
-            </Tooltip>
-
-            <Tooltip content="Download App">
-              <button className="w-12 h-12 rounded-full bg-[#2d2f3e] flex items-center justify-center text-indigo-400 hover:bg-indigo-500 hover:text-white transition-all mt-2">
-                <Download className="h-5 w-5" />
-              </button>
-            </Tooltip>
-          </ScrollArea>
-        </div>
-
         {/* Channels sidebar */}
         <div
           className={`w-60 bg-[#2d2f3e] flex-shrink-0 flex flex-col border-r border-black/20 ${
-            isMobile ? (isMobileSidebarOpen ? "fixed inset-0 z-40" : "hidden") : "flex"
+            isMobile
+              ? isMobileSidebarOpen
+                ? "fixed inset-0 z-40"
+                : "hidden"
+              : "flex"
           }`}
         >
           {/* Server header */}
@@ -250,15 +158,18 @@ export default function DiscordChatInterface() {
               {selectedServer === "harmony"
                 ? "HarmonyHub"
                 : selectedServer === "developers"
-                  ? "Developers"
-                  : selectedServer === "gaming"
-                    ? "Gaming"
-                    : selectedServer === "design"
-                      ? "Art & Design"
-                      : "Home"}
+                ? "Developers"
+                : selectedServer === "gaming"
+                ? "Gaming"
+                : selectedServer === "design"
+                ? "Art & Design"
+                : "Home"}
             </h2>
             {isMobile && (
-              <button onClick={() => setIsMobileSidebarOpen(false)} className="text-gray-400 hover:text-white">
+              <button
+                onClick={() => setIsMobileSidebarOpen(false)}
+                className="text-gray-400 hover:text-white"
+              >
                 <X className="h-5 w-5" />
               </button>
             )}
@@ -269,8 +180,13 @@ export default function DiscordChatInterface() {
             {selectedServer === "home" && (
               <div className="px-2 py-4">
                 <div className="px-2 mb-1 flex items-center justify-between">
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase">Direct Messages</h3>
-                  <button onClick={openNewConversation} className="text-gray-400 hover:text-white">
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase">
+                    Direct Messages
+                  </h3>
+                  <button
+                    onClick={openNewConversation}
+                    className="text-gray-400 hover:text-white"
+                  >
                     <Plus className="h-4 w-4" />
                   </button>
                 </div>
@@ -332,23 +248,38 @@ export default function DiscordChatInterface() {
                       <ChannelItem
                         icon={<Hash />}
                         name="welcome"
-                        active={selectedCategory === "general" && selectedChannel === "welcome"}
+                        active={
+                          selectedCategory === "general" &&
+                          selectedChannel === "welcome"
+                        }
                         unread={false}
-                        onClick={() => handleChannelSelect("general", "welcome")}
+                        onClick={() =>
+                          handleChannelSelect("general", "welcome")
+                        }
                       />
                       <ChannelItem
                         icon={<Hash />}
                         name="general"
-                        active={selectedCategory === "general" && selectedChannel === "general"}
+                        active={
+                          selectedCategory === "general" &&
+                          selectedChannel === "general"
+                        }
                         unread={true}
-                        onClick={() => handleChannelSelect("general", "general")}
+                        onClick={() =>
+                          handleChannelSelect("general", "general")
+                        }
                       />
                       <ChannelItem
                         icon={<Hash />}
                         name="introductions"
-                        active={selectedCategory === "general" && selectedChannel === "introductions"}
+                        active={
+                          selectedCategory === "general" &&
+                          selectedChannel === "introductions"
+                        }
                         unread={false}
-                        onClick={() => handleChannelSelect("general", "introductions")}
+                        onClick={() =>
+                          handleChannelSelect("general", "introductions")
+                        }
                       />
                     </div>
                   )}
@@ -375,23 +306,38 @@ export default function DiscordChatInterface() {
                       <ChannelItem
                         icon={<Hash />}
                         name="resources"
-                        active={selectedCategory === "community" && selectedChannel === "resources"}
+                        active={
+                          selectedCategory === "community" &&
+                          selectedChannel === "resources"
+                        }
                         unread={false}
-                        onClick={() => handleChannelSelect("community", "resources")}
+                        onClick={() =>
+                          handleChannelSelect("community", "resources")
+                        }
                       />
                       <ChannelItem
                         icon={<Hash />}
                         name="showcase"
-                        active={selectedCategory === "community" && selectedChannel === "showcase"}
+                        active={
+                          selectedCategory === "community" &&
+                          selectedChannel === "showcase"
+                        }
                         unread={false}
-                        onClick={() => handleChannelSelect("community", "showcase")}
+                        onClick={() =>
+                          handleChannelSelect("community", "showcase")
+                        }
                       />
                       <ChannelItem
                         icon={<Hash />}
                         name="feedback"
-                        active={selectedCategory === "community" && selectedChannel === "feedback"}
+                        active={
+                          selectedCategory === "community" &&
+                          selectedChannel === "feedback"
+                        }
                         unread={false}
-                        onClick={() => handleChannelSelect("community", "feedback")}
+                        onClick={() =>
+                          handleChannelSelect("community", "feedback")
+                        }
                       />
                     </div>
                   )}
@@ -418,21 +364,34 @@ export default function DiscordChatInterface() {
                       <ChannelItem
                         icon={<Volume2 />}
                         name="General Voice"
-                        active={selectedCategory === "voice" && selectedChannel === "General Voice"}
+                        active={
+                          selectedCategory === "voice" &&
+                          selectedChannel === "General Voice"
+                        }
                         unread={false}
-                        onClick={() => handleChannelSelect("voice", "General Voice")}
+                        onClick={() =>
+                          handleChannelSelect("voice", "General Voice")
+                        }
                       />
                       <ChannelItem
                         icon={<Volume2 />}
                         name="Chill Lounge"
-                        active={selectedCategory === "voice" && selectedChannel === "Chill Lounge"}
+                        active={
+                          selectedCategory === "voice" &&
+                          selectedChannel === "Chill Lounge"
+                        }
                         unread={false}
-                        onClick={() => handleChannelSelect("voice", "Chill Lounge")}
+                        onClick={() =>
+                          handleChannelSelect("voice", "Chill Lounge")
+                        }
                       />
                       <ChannelItem
                         icon={<Volume2 />}
                         name="Gaming"
-                        active={selectedCategory === "voice" && selectedChannel === "Gaming"}
+                        active={
+                          selectedCategory === "voice" &&
+                          selectedChannel === "Gaming"
+                        }
                         unread={false}
                         onClick={() => handleChannelSelect("voice", "Gaming")}
                       />
@@ -453,7 +412,9 @@ export default function DiscordChatInterface() {
                 <img src="/placeholder.svg?height=32&width=32" alt="User" />
               </Avatar>
               <div className="flex-1 min-w-0">
-                <div className="text-sm text-white font-medium truncate">Username</div>
+                <div className="text-sm text-white font-medium truncate">
+                  Username
+                </div>
                 <div className="text-xs text-green-400 truncate">Online</div>
               </div>
             </div>
@@ -499,7 +460,10 @@ export default function DiscordChatInterface() {
           {/* Channel header */}
           <div className="h-12 px-4 bg-[#2d2f3e] border-b border-black/20 flex items-center justify-between shadow-sm">
             {isMobile && (
-              <button onClick={() => setIsMobileSidebarOpen(true)} className="mr-2 text-gray-400 hover:text-white">
+              <button
+                onClick={() => setIsMobileSidebarOpen(true)}
+                className="mr-2 text-gray-400 hover:text-white"
+              >
                 <Menu className="h-5 w-5" />
               </button>
             )}
@@ -512,7 +476,9 @@ export default function DiscordChatInterface() {
                   ) : (
                     <Hash className="h-5 w-5 text-gray-400 mr-2" />
                   )}
-                  <span className="text-white font-medium">{selectedChannel}</span>
+                  <span className="text-white font-medium">
+                    {selectedChannel}
+                  </span>
                 </div>
               </>
             )}
@@ -521,7 +487,10 @@ export default function DiscordChatInterface() {
               <div className="flex items-center">
                 <div className="relative mr-2">
                   <Avatar className="h-6 w-6">
-                    <img src="/placeholder.svg?height=24&width=24" alt={selectedDM} />
+                    <img
+                      src="/placeholder.svg?height=24&width=24"
+                      alt={selectedDM}
+                    />
                   </Avatar>
                   <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-green-500 border border-[#2d2f3e]"></span>
                 </div>
@@ -580,7 +549,7 @@ export default function DiscordChatInterface() {
               message="Hello everyone! I'm excited to be here. Looking forward to connecting with all of you."
               reactions={[
                 { emoji: "👋", count: 3 },
-                { emoji: "😊", count: 2 },
+                { emoji: "😊", count: 2 }
               ]}
             />
 
@@ -636,7 +605,9 @@ export default function DiscordChatInterface() {
                   type="text"
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder={`Message ${selectedChannel ? `#${selectedChannel}` : selectedDM}`}
+                  placeholder={`Message ${
+                    selectedChannel ? `#${selectedChannel}` : selectedDM
+                  }`}
                   className="w-full bg-transparent pl-12 pr-36 py-3.5 text-white placeholder-gray-400 focus:outline-none border-none"
                 />
 
@@ -681,7 +652,9 @@ export default function DiscordChatInterface() {
 
               <div className="mt-2 px-2 flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center">
-                  <kbd className="px-1.5 py-0.5 bg-[#232533] rounded text-gray-400 mr-1.5">Enter</kbd>
+                  <kbd className="px-1.5 py-0.5 bg-[#232533] rounded text-gray-400 mr-1.5">
+                    Enter
+                  </kbd>
                   <span>to send</span>
                 </div>
                 <div>
@@ -698,17 +671,33 @@ export default function DiscordChatInterface() {
         <div className="w-60 bg-[#2d2f3e] flex-shrink-0 border-l border-black/20 hidden lg:block">
           <div className="p-4">
             <div className="mb-6">
-              <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">Online — 4</h3>
+              <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">
+                Online — 4
+              </h3>
               <div className="space-y-2">
                 <MemberItem name="HarmonyBot" status="Bot" isBot />
-                <MemberItem name="Alex" status="Online" activity="Web Development" />
-                <MemberItem name="Taylor" status="Online" activity="React Developer" />
-                <MemberItem name="Jordan" status="Idle" activity="Working on a project" />
+                <MemberItem
+                  name="Alex"
+                  status="Online"
+                  activity="Web Development"
+                />
+                <MemberItem
+                  name="Taylor"
+                  status="Online"
+                  activity="React Developer"
+                />
+                <MemberItem
+                  name="Jordan"
+                  status="Idle"
+                  activity="Working on a project"
+                />
               </div>
             </div>
 
             <div>
-              <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">Offline — 2</h3>
+              <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2">
+                Offline — 2
+              </h3>
               <div className="space-y-2">
                 <MemberItem name="Sam" status="Offline" isOffline />
                 <MemberItem name="Riley" status="Offline" isOffline />
@@ -723,7 +712,10 @@ export default function DiscordChatInterface() {
             <div className="bg-[#2d2f3e] rounded-[6px] border border-black/20 w-full max-w-md overflow-hidden shadow-lg">
               <div className="p-4 border-b border-black/20 flex items-center justify-between">
                 <h3 className="text-white font-medium">New Conversation</h3>
-                <button onClick={closeNewConversation} className="text-gray-400 hover:text-white">
+                <button
+                  onClick={closeNewConversation}
+                  className="text-gray-400 hover:text-white"
+                >
                   <X className="h-5 w-5" />
                 </button>
               </div>
@@ -744,11 +736,31 @@ export default function DiscordChatInterface() {
 
                 <ScrollArea className="max-h-60">
                   <div className="space-y-1">
-                    <FriendItem name="Morgan" status="online" onClick={() => startNewConversation("Morgan")} />
-                    <FriendItem name="Casey" status="online" onClick={() => startNewConversation("Casey")} />
-                    <FriendItem name="Riley" status="idle" onClick={() => startNewConversation("Riley")} />
-                    <FriendItem name="Quinn" status="offline" onClick={() => startNewConversation("Quinn")} />
-                    <FriendItem name="Jamie" status="online" onClick={() => startNewConversation("Jamie")} />
+                    <FriendItem
+                      name="Morgan"
+                      status="online"
+                      onClick={() => startNewConversation("Morgan")}
+                    />
+                    <FriendItem
+                      name="Casey"
+                      status="online"
+                      onClick={() => startNewConversation("Casey")}
+                    />
+                    <FriendItem
+                      name="Riley"
+                      status="idle"
+                      onClick={() => startNewConversation("Riley")}
+                    />
+                    <FriendItem
+                      name="Quinn"
+                      status="offline"
+                      onClick={() => startNewConversation("Quinn")}
+                    />
+                    <FriendItem
+                      name="Jamie"
+                      status="online"
+                      onClick={() => startNewConversation("Jamie")}
+                    />
                   </div>
                 </ScrollArea>
               </div>
@@ -778,7 +790,7 @@ export default function DiscordChatInterface() {
         )}
       </div>
     </TooltipProvider>
-  )
+  );
 }
 
 function ChannelItem({
@@ -786,23 +798,33 @@ function ChannelItem({
   name,
   active = false,
   unread = false,
-  onClick,
+  onClick
 }: {
-  icon: React.ReactNode
-  name: string
-  active?: boolean
-  unread?: boolean
-  onClick?: () => void
+  icon: React.ReactNode;
+  name: string;
+  active?: boolean;
+  unread?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <div
       onClick={onClick}
       className={`group flex items-center justify-between px-2 py-1 rounded hover:bg-[#393b4d] cursor-pointer transition-colors ${
-        active ? "bg-[#393b4d] text-white" : unread ? "text-white" : "text-gray-400"
+        active
+          ? "bg-[#393b4d] text-white"
+          : unread
+          ? "text-white"
+          : "text-gray-400"
       }`}
     >
       <div className="flex items-center">
-        <div className={`mr-1.5 ${active ? "text-white" : unread ? "text-white" : "text-gray-400"}`}>{icon}</div>
+        <div
+          className={`mr-1.5 ${
+            active ? "text-white" : unread ? "text-white" : "text-gray-400"
+          }`}
+        >
+          {icon}
+        </div>
         <div className="text-sm">{name}</div>
       </div>
       {unread && <div className="w-2 h-2 rounded-full bg-white"></div>}
@@ -817,7 +839,7 @@ function ChannelItem({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function DirectMessageItem({
@@ -825,19 +847,23 @@ function DirectMessageItem({
   status,
   unread = false,
   active = false,
-  onClick,
+  onClick
 }: {
-  name: string
-  status: "online" | "idle" | "offline"
-  unread?: boolean
-  active?: boolean
-  onClick?: () => void
+  name: string;
+  status: "online" | "idle" | "offline";
+  unread?: boolean;
+  active?: boolean;
+  onClick?: () => void;
 }) {
   return (
     <div
       onClick={onClick}
       className={`group flex items-center justify-between px-2 py-1 rounded hover:bg-[#393b4d] cursor-pointer transition-colors ${
-        active ? "bg-[#393b4d] text-white" : unread ? "text-white" : "text-gray-400"
+        active
+          ? "bg-[#393b4d] text-white"
+          : unread
+          ? "text-white"
+          : "text-gray-400"
       }`}
     >
       <div className="flex items-center">
@@ -847,7 +873,11 @@ function DirectMessageItem({
           </Avatar>
           <span
             className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#2d2f3e] ${
-              status === "online" ? "bg-green-500" : status === "idle" ? "bg-yellow-500" : "bg-gray-500"
+              status === "online"
+                ? "bg-green-500"
+                : status === "idle"
+                ? "bg-yellow-500"
+                : "bg-gray-500"
             }`}
           ></span>
         </div>
@@ -862,7 +892,7 @@ function DirectMessageItem({
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function MemberItem({
@@ -870,13 +900,13 @@ function MemberItem({
   status,
   activity,
   isBot = false,
-  isOffline = false,
+  isOffline = false
 }: {
-  name: string
-  status: string
-  activity?: string
-  isBot?: boolean
-  isOffline?: boolean
+  name: string;
+  status: string;
+  activity?: string;
+  isBot?: boolean;
+  isOffline?: boolean;
 }) {
   return (
     <div className="flex items-center px-2 py-1 rounded hover:bg-[#393b4d] cursor-pointer transition-colors group">
@@ -893,9 +923,16 @@ function MemberItem({
         )}
       </div>
       <div>
-        <div className={`text-sm ${isOffline ? "text-gray-500" : "text-white"}`}>{name}</div>
+        <div
+          className={`text-sm ${isOffline ? "text-gray-500" : "text-white"}`}
+        >
+          {name}
+        </div>
         {isBot ? (
-          <Badge variant="secondary" className="text-xs bg-indigo-500 text-white">
+          <Badge
+            variant="secondary"
+            className="text-xs bg-indigo-500 text-white"
+          >
             BOT
           </Badge>
         ) : (
@@ -908,17 +945,19 @@ function MemberItem({
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 function SystemMessage({ message }: { message: string }) {
   return (
     <div className="flex items-center justify-center my-4">
       <div className="h-px w-full bg-[#393b4d]"></div>
-      <div className="px-3 text-xs text-gray-500 whitespace-nowrap">{message}</div>
+      <div className="px-3 text-xs text-gray-500 whitespace-nowrap">
+        {message}
+      </div>
       <div className="h-px w-full bg-[#393b4d]"></div>
     </div>
-  )
+  );
 }
 
 function ChatMessage({
@@ -931,28 +970,38 @@ function ChatMessage({
   reactions = [],
   hasAttachment = false,
   attachmentType = "",
-  isDelivered = false,
+  isDelivered = false
 }: {
-  avatar: string
-  username: string
-  time: string
-  message: string
-  isBot?: boolean
-  isPinned?: boolean
-  reactions?: { emoji: string; count: number }[]
-  hasAttachment?: boolean
-  attachmentType?: string
-  isDelivered?: boolean
+  avatar: string;
+  username: string;
+  time: string;
+  message: string;
+  isBot?: boolean;
+  isPinned?: boolean;
+  reactions?: { emoji: string; count: number }[];
+  hasAttachment?: boolean;
+  attachmentType?: string;
+  isDelivered?: boolean;
 }) {
   return (
     <div className="group hover:bg-[#32344a] rounded px-2 py-1.5 -mx-2 transition-colors mb-4">
       <div className="flex">
-        <Avatar className={`h-10 w-10 mr-3 mt-0.5 ${isBot ? "ring-1 ring-indigo-500" : ""}`}>
+        <Avatar
+          className={`h-10 w-10 mr-3 mt-0.5 ${
+            isBot ? "ring-1 ring-indigo-500" : ""
+          }`}
+        >
           <img src={avatar || "/placeholder.svg"} alt={username} />
         </Avatar>
         <div className="flex-1 min-w-0">
           <div className="flex items-center">
-            <span className={`font-medium ${isBot ? "text-indigo-400" : "text-white"}`}>{username}</span>
+            <span
+              className={`font-medium ${
+                isBot ? "text-indigo-400" : "text-white"
+              }`}
+            >
+              {username}
+            </span>
             <span className="ml-2 text-xs text-gray-500">{time}</span>
             {isPinned && (
               <span className="ml-2 text-xs bg-[#393b4d] text-gray-300 px-1.5 py-0.5 rounded flex items-center">
@@ -1004,7 +1053,9 @@ function ChatMessage({
                   className="flex items-center bg-[#393b4d] hover:bg-indigo-500/20 px-2 py-0.5 rounded-full cursor-pointer transition-colors"
                 >
                   <span className="mr-1">{reaction.emoji}</span>
-                  <span className="text-xs text-gray-400">{reaction.count}</span>
+                  <span className="text-xs text-gray-400">
+                    {reaction.count}
+                  </span>
                 </div>
               ))}
             </div>
@@ -1019,7 +1070,7 @@ function ChatMessage({
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 function TypingIndicator({ username }: { username: string }) {
@@ -1031,7 +1082,10 @@ function TypingIndicator({ username }: { username: string }) {
       <div className="text-sm text-gray-400">
         <span className="font-medium text-white">{username}</span> is typing
         <span className="ml-1 inline-flex">
-          <span className="w-1 h-1 bg-gray-400 rounded-full mx-0.5 animate-bounce" style={{ animationDelay: "0ms" }} />
+          <span
+            className="w-1 h-1 bg-gray-400 rounded-full mx-0.5 animate-bounce"
+            style={{ animationDelay: "0ms" }}
+          />
           <span
             className="w-1 h-1 bg-gray-400 rounded-full mx-0.5 animate-bounce"
             style={{ animationDelay: "200ms" }}
@@ -1043,17 +1097,17 @@ function TypingIndicator({ username }: { username: string }) {
         </span>
       </div>
     </div>
-  )
+  );
 }
 
 function FriendItem({
   name,
   status,
-  onClick,
+  onClick
 }: {
-  name: string
-  status: "online" | "idle" | "offline"
-  onClick?: () => void
+  name: string;
+  status: "online" | "idle" | "offline";
+  onClick?: () => void;
 }) {
   return (
     <div
@@ -1066,16 +1120,24 @@ function FriendItem({
       <div className="flex-1">
         <div className="text-sm text-white">{name}</div>
         <div className="text-xs text-gray-400">
-          {status === "online" ? "Online" : status === "idle" ? "Idle" : "Offline"}
+          {status === "online"
+            ? "Online"
+            : status === "idle"
+            ? "Idle"
+            : "Offline"}
         </div>
       </div>
       <div
         className={`w-2 h-2 rounded-full ${
-          status === "online" ? "bg-green-500" : status === "idle" ? "bg-yellow-500" : "bg-gray-500"
+          status === "online"
+            ? "bg-green-500"
+            : status === "idle"
+            ? "bg-yellow-500"
+            : "bg-gray-500"
         }`}
       ></div>
     </div>
-  )
+  );
 }
 
 // Additional icons needed
@@ -1096,7 +1158,7 @@ function Code(props: React.SVGProps<SVGSVGElement>) {
       <polyline points="16 18 22 12 16 6"></polyline>
       <polyline points="8 6 2 12 8 18"></polyline>
     </svg>
-  )
+  );
 }
 
 function Gamepad2(props: React.SVGProps<SVGSVGElement>) {
@@ -1119,7 +1181,7 @@ function Gamepad2(props: React.SVGProps<SVGSVGElement>) {
       <line x1="18" y1="10" x2="18.01" y2="10"></line>
       <path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.544-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.152A4 4 0 0 0 17.32 5z"></path>
     </svg>
-  )
+  );
 }
 
 function Palette(props: React.SVGProps<SVGSVGElement>) {
@@ -1142,5 +1204,5 @@ function Palette(props: React.SVGProps<SVGSVGElement>) {
       <circle cx="6.5" cy="12.5" r=".5"></circle>
       <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
     </svg>
-  )
+  );
 }

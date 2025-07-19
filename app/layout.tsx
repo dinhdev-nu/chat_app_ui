@@ -1,20 +1,20 @@
-import type { Metadata } from 'next'
-import './globals.css'
+import type { Metadata } from "next";
+import "./globals.css";
 
 export const metadata: Metadata = {
-  title: 'chat app',
-  description: 'A simple chat app built with Next.js and TypeScript',
-  generator: 'Next.js',
-}
+  title: "CommuniHub",
+  description: "A simple chat app built with Next.js and TypeScript",
+  generator: "Next.js"
+};
 
 export default function RootLayout({
-  children,
+  children
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
     <html lang="en">
       <body>{children}</body>
     </html>
-  )
+  );
 }

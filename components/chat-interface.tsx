@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { motion, useAnimation } from "framer-motion"
-import { useEffect, useState, memo, useMemo } from "react"
-import { useInView } from "react-intersection-observer"
-import { Avatar } from "@/components/ui/avatar"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { motion, useAnimation } from "framer-motion";
+import { useEffect, useState, memo, useMemo } from "react";
+import { useInView } from "react-intersection-observer";
+import { Avatar } from "@/components/ui/avatar";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Hash,
   Volume2,
@@ -26,9 +26,9 @@ import {
   Star,
   ImageIcon,
   Gift,
-  CheckCheck,
-} from "lucide-react"
-import { FloatingParticles } from "@/components/floating-particles"
+  CheckCheck
+} from "lucide-react";
+import { FloatingParticles } from "@/components/floating-particles";
 
 // Add these memoized components before the main ChatInterface component
 
@@ -36,8 +36,13 @@ const MemoizedChannelItem = memo(function ChannelItem({
   icon,
   name,
   active = false,
-  unread = false,
-}: { icon: React.ReactNode; name: string; active?: boolean; unread?: boolean }) {
+  unread = false
+}: {
+  icon: React.ReactNode;
+  name: string;
+  active?: boolean;
+  unread?: boolean;
+}) {
   return (
     <div
       className={`flex items-center justify-between px-2 py-1 rounded hover:bg-white/5 cursor-pointer transition-colors ${
@@ -45,19 +50,25 @@ const MemoizedChannelItem = memo(function ChannelItem({
       }`}
     >
       <div className="flex items-center">
-        <div className={`mr-1 ${active ? "text-indigo-400" : "text-gray-400"}`}>{icon}</div>
+        <div className={`mr-1 ${active ? "text-indigo-400" : "text-gray-400"}`}>
+          {icon}
+        </div>
         <div className="text-sm">{name}</div>
       </div>
       {unread && <div className="w-2 h-2 rounded-full bg-indigo-500"></div>}
     </div>
-  )
-})
+  );
+});
 
 const MemoizedDirectMessageItem = memo(function DirectMessageItem({
   name,
   status,
-  unread = false,
-}: { name: string; status: "online" | "idle" | "offline"; unread?: boolean }) {
+  unread = false
+}: {
+  name: string;
+  status: "online" | "idle" | "offline";
+  unread?: boolean;
+}) {
   return (
     <div
       className={`flex items-center justify-between px-2 py-1 rounded hover:bg-white/5 cursor-pointer transition-colors text-gray-400`}
@@ -73,16 +84,22 @@ const MemoizedDirectMessageItem = memo(function DirectMessageItem({
       </div>
       {unread && <div className="w-2 h-2 rounded-full bg-indigo-500"></div>}
     </div>
-  )
-})
+  );
+});
 
 const MemoizedMemberItem = memo(function MemberItem({
   name,
   status,
   activity,
   isBot = false,
-  isOffline = false,
-}: { name: string; status: string; activity?: string; isBot?: boolean; isOffline?: boolean }) {
+  isOffline = false
+}: {
+  name: string;
+  status: string;
+  activity?: string;
+  isBot?: boolean;
+  isOffline?: boolean;
+}) {
   return (
     <div className="flex items-center px-2 py-1 rounded hover:bg-white/5 cursor-pointer transition-colors group">
       <div className="relative mr-2">
@@ -98,9 +115,16 @@ const MemoizedMemberItem = memo(function MemberItem({
         )}
       </div>
       <div>
-        <div className={`text-sm ${isOffline ? "text-gray-500" : "text-white"}`}>{name}</div>
+        <div
+          className={`text-sm ${isOffline ? "text-gray-500" : "text-white"}`}
+        >
+          {name}
+        </div>
         {isBot ? (
-          <Badge variant="secondary" className="text-xs bg-indigo-500 text-white">
+          <Badge
+            variant="secondary"
+            className="text-xs bg-indigo-500 text-white"
+          >
             BOT
           </Badge>
         ) : (
@@ -113,18 +137,24 @@ const MemoizedMemberItem = memo(function MemberItem({
         </button>
       </div>
     </div>
-  )
-})
+  );
+});
 
-const MemoizedSystemMessage = memo(function SystemMessage({ message }: { message: string }) {
+const MemoizedSystemMessage = memo(function SystemMessage({
+  message
+}: {
+  message: string;
+}) {
   return (
     <div className="flex items-center justify-center my-4">
       <div className="h-px w-full bg-white/5"></div>
-      <div className="px-3 text-xs text-gray-500 whitespace-nowrap">{message}</div>
+      <div className="px-3 text-xs text-gray-500 whitespace-nowrap">
+        {message}
+      </div>
       <div className="h-px w-full bg-white/5"></div>
     </div>
-  )
-})
+  );
+});
 
 const MemoizedChatMessage = memo(function ChatMessage({
   avatar,
@@ -136,27 +166,37 @@ const MemoizedChatMessage = memo(function ChatMessage({
   reactions = [],
   hasAttachment = false,
   attachmentType = "",
-  isDelivered = false,
+  isDelivered = false
 }: {
-  avatar: string
-  username: string
-  time: string
-  message: string
-  isBot?: boolean
-  isPinned?: boolean
-  reactions?: { emoji: string; count: number }[]
-  hasAttachment?: boolean
-  attachmentType?: string
-  isDelivered?: boolean
+  avatar: string;
+  username: string;
+  time: string;
+  message: string;
+  isBot?: boolean;
+  isPinned?: boolean;
+  reactions?: { emoji: string; count: number }[];
+  hasAttachment?: boolean;
+  attachmentType?: string;
+  isDelivered?: boolean;
 }) {
   return (
     <div className="flex group hover:bg-white/5 rounded-lg p-2 -mx-2 transition-colors">
-      <Avatar className={`h-10 w-10 mr-3 mt-0.5 ${isBot ? "ring-2 ring-indigo-500" : ""}`}>
+      <Avatar
+        className={`h-10 w-10 mr-3 mt-0.5 ${
+          isBot ? "ring-2 ring-indigo-500" : ""
+        }`}
+      >
         <img src={avatar || "/placeholder.svg"} alt={username} />
       </Avatar>
       <div className="flex-1">
         <div className="flex items-center">
-          <span className={`font-medium ${isBot ? "text-indigo-400" : "text-white"}`}>{username}</span>
+          <span
+            className={`font-medium ${
+              isBot ? "text-indigo-400" : "text-white"
+            }`}
+          >
+            {username}
+          </span>
           <span className="ml-2 text-xs text-gray-500">{time}</span>
           {isPinned && (
             <span className="ml-2 text-xs bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded flex items-center">
@@ -222,10 +262,14 @@ const MemoizedChatMessage = memo(function ChatMessage({
         )}
       </div>
     </div>
-  )
-})
+  );
+});
 
-const MemoizedTypingIndicator = memo(function TypingIndicator({ username }: { username: string }) {
+const MemoizedTypingIndicator = memo(function TypingIndicator({
+  username
+}: {
+  username: string;
+}) {
   return (
     <div className="flex items-center px-2 py-1">
       <Avatar className="h-8 w-8 mr-2">
@@ -236,17 +280,11 @@ const MemoizedTypingIndicator = memo(function TypingIndicator({ username }: { us
         <span className="ml-1 inline-flex">
           <motion.span
             animate={{ opacity: [0, 1, 0] }}
-            transition={{ repeat: Number.POSITIVE_INFINITY, duration: 1.5, ease: "easeInOut", times: [0, 0.5, 1] }}
-            className="w-1 h-1 bg-gray-400 rounded-full mx-0.5"
-          />
-          <motion.span
-            animate={{ opacity: [0, 1, 0] }}
             transition={{
               repeat: Number.POSITIVE_INFINITY,
               duration: 1.5,
               ease: "easeInOut",
-              times: [0, 0.5, 1],
-              delay: 0.2,
+              times: [0, 0.5, 1]
             }}
             className="w-1 h-1 bg-gray-400 rounded-full mx-0.5"
           />
@@ -257,71 +295,133 @@ const MemoizedTypingIndicator = memo(function TypingIndicator({ username }: { us
               duration: 1.5,
               ease: "easeInOut",
               times: [0, 0.5, 1],
-              delay: 0.4,
+              delay: 0.2
+            }}
+            className="w-1 h-1 bg-gray-400 rounded-full mx-0.5"
+          />
+          <motion.span
+            animate={{ opacity: [0, 1, 0] }}
+            transition={{
+              repeat: Number.POSITIVE_INFINITY,
+              duration: 1.5,
+              ease: "easeInOut",
+              times: [0, 0.5, 1],
+              delay: 0.4
             }}
             className="w-1 h-1 bg-gray-400 rounded-full mx-0.5"
           />
         </span>
       </div>
     </div>
-  )
-})
+  );
+});
 
 export default function ChatInterface() {
-  const controls = useAnimation()
+  const controls = useAnimation();
   const [ref, inView] = useInView({
     triggerOnce: true, // Changed to true to only trigger once
-    threshold: 0.1,
-  })
+    threshold: 0.1
+  });
 
-  const [isTyping, setIsTyping] = useState(false)
-  const [inputValue, setInputValue] = useState("")
+  const [isTyping, setIsTyping] = useState(false);
+  const [inputValue, setInputValue] = useState("");
 
   // Simulate typing indicator with reduced frequency
   useEffect(() => {
     const typingInterval = setInterval(() => {
-      setIsTyping((prev) => !prev)
-    }, 5000) // Increased to 5 seconds to reduce state updates
+      setIsTyping((prev) => !prev);
+    }, 5000); // Increased to 5 seconds to reduce state updates
 
-    return () => clearInterval(typingInterval)
-  }, [])
+    return () => clearInterval(typingInterval);
+  }, []);
 
   useEffect(() => {
     if (inView) {
-      controls.start("visible")
+      controls.start("visible");
     }
-  }, [controls, inView])
+  }, [controls, inView]);
 
   // Memoize channel items
   const channelItems = useMemo(
     () => [
-      <MemoizedChannelItem key="welcome" icon={<Hash />} name="welcome" active unread={false} />,
-      <MemoizedChannelItem key="general" icon={<Hash />} name="general" unread={true} />,
-      <MemoizedChannelItem key="introductions" icon={<Hash />} name="introductions" unread={false} />,
-      <MemoizedChannelItem key="resources" icon={<Hash />} name="resources" unread={false} />,
+      <MemoizedChannelItem
+        key="welcome"
+        icon={<Hash />}
+        name="welcome"
+        active
+        unread={false}
+      />,
+      <MemoizedChannelItem
+        key="general"
+        icon={<Hash />}
+        name="general"
+        unread={true}
+      />,
+      <MemoizedChannelItem
+        key="introductions"
+        icon={<Hash />}
+        name="introductions"
+        unread={false}
+      />,
+      <MemoizedChannelItem
+        key="resources"
+        icon={<Hash />}
+        name="resources"
+        unread={false}
+      />
     ],
-    [],
-  )
+    []
+  );
 
   // Memoize voice channel items
   const voiceChannelItems = useMemo(
     () => [
-      <MemoizedChannelItem key="general-voice" icon={<Volume2 />} name="General Voice" unread={false} />,
-      <MemoizedChannelItem key="chill-lounge" icon={<Volume2 />} name="Chill Lounge" unread={false} />,
+      <MemoizedChannelItem
+        key="general-voice"
+        icon={<Volume2 />}
+        name="General Voice"
+        unread={false}
+      />,
+      <MemoizedChannelItem
+        key="chill-lounge"
+        icon={<Volume2 />}
+        name="Chill Lounge"
+        unread={false}
+      />
     ],
-    [],
-  )
+    []
+  );
 
   // Memoize direct message items
   const directMessageItems = useMemo(
     () => [
-      <MemoizedDirectMessageItem key="taylor" name="Taylor" status="online" unread={true} />,
-      <MemoizedDirectMessageItem key="jordan" name="Jordan" status="online" unread={false} />,
-      <MemoizedDirectMessageItem key="alex" name="Alex" status="idle" unread={false} />,
-      <MemoizedDirectMessageItem key="sam" name="Sam" status="offline" unread={false} />,
+      <MemoizedDirectMessageItem
+        key="taylor"
+        name="Taylor"
+        status="online"
+        unread={true}
+      />,
+      <MemoizedDirectMessageItem
+        key="jordan"
+        name="Jordan"
+        status="online"
+        unread={false}
+      />,
+      <MemoizedDirectMessageItem
+        key="alex"
+        name="Alex"
+        status="idle"
+        unread={false}
+      />,
+      <MemoizedDirectMessageItem
+        key="sam"
+        name="Sam"
+        status="offline"
+        unread={false}
+      />
     ],
-    [],
-  )
+    []
+  );
 
   // Memoize chat messages
   const chatMessages = useMemo(
@@ -330,9 +430,9 @@ export default function ChatInterface() {
       <MemoizedChatMessage
         key="bot"
         avatar="/placeholder.svg?height=40&width=40"
-        username="HarmonyBot"
+        username="Community Bot"
         time="10:00 AM"
-        message="👋 Welcome to the HarmonyHub community! This is where you can connect with other members, share ideas, and collaborate on projects."
+        message="👋 Welcome to the Community Hub! This is where you can connect with other members, share ideas, and collaborate on projects."
         isBot
         isPinned
       />,
@@ -344,7 +444,7 @@ export default function ChatInterface() {
         message="Hello everyone! I'm excited to be here. Looking forward to connecting with all of you."
         reactions={[
           { emoji: "👋", count: 3 },
-          { emoji: "😊", count: 2 },
+          { emoji: "😊", count: 2 }
         ]}
       />,
       <MemoizedChatMessage
@@ -378,26 +478,45 @@ export default function ChatInterface() {
         time="10:15 AM"
         message="That sounds great! I've been working with React for about a year now. Maybe we could set up a time to chat about your project?"
         isDelivered
-      />,
+      />
     ],
-    [],
-  )
+    []
+  );
 
   // Memoize member items
   const memberItems = useMemo(
     () => [
-      <MemoizedMemberItem key="bot" name="HarmonyBot" status="Bot" isBot />,
-      <MemoizedMemberItem key="alex" name="Alex" status="Online" activity="Web Development" />,
-      <MemoizedMemberItem key="taylor" name="Taylor" status="Online" activity="React Developer" />,
-      <MemoizedMemberItem key="jordan" name="Jordan" status="Idle" activity="Working on a project" />,
+      <MemoizedMemberItem key="bot" name="Community Bot" status="Bot" isBot />,
+      <MemoizedMemberItem
+        key="alex"
+        name="Alex"
+        status="Online"
+        activity="Web Development"
+      />,
+      <MemoizedMemberItem
+        key="taylor"
+        name="Taylor"
+        status="Online"
+        activity="React Developer"
+      />,
+      <MemoizedMemberItem
+        key="jordan"
+        name="Jordan"
+        status="Idle"
+        activity="Working on a project"
+      />,
       <MemoizedMemberItem key="sam" name="Sam" status="Offline" isOffline />,
-      <MemoizedMemberItem key="riley" name="Riley" status="Offline" isOffline />,
+      <MemoizedMemberItem key="riley" name="Riley" status="Offline" isOffline />
     ],
-    [],
-  )
+    []
+  );
 
   return (
-    <section className="py-20 px-6 relative overflow-hidden" id="chat-interface" ref={ref}>
+    <section
+      className="py-20 px-6 relative overflow-hidden"
+      id="chat-interface"
+      ref={ref}
+    >
       {/* Decorative elements - reduced particle count */}
       <div className="absolute inset-0 z-0">
         <FloatingParticles count={8} /> {/* Reduced from 15 to 8 */}
@@ -409,13 +528,15 @@ export default function ChatInterface() {
           animate={controls}
           variants={{
             hidden: { opacity: 0, y: 50 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
           }}
           className="text-center mb-16"
         >
           <div className="inline-flex items-center justify-center mb-4">
             <span className="h-px w-8 bg-indigo-500/50"></span>
-            <span className="mx-4 text-indigo-400 font-medium">REAL-TIME COMMUNICATION</span>
+            <span className="mx-4 text-indigo-400 font-medium">
+              REAL-TIME COMMUNICATION
+            </span>
             <span className="h-px w-8 bg-indigo-500/50"></span>
           </div>
           <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
@@ -425,8 +546,9 @@ export default function ChatInterface() {
             </span>
           </h2>
           <p className="text-gray-400 max-w-2xl mx-auto">
-            Connect with like-minded individuals in our vibrant community channels. Share ideas, collaborate, and build
-            relationships in real-time.
+            Connect with like-minded individuals in our vibrant community
+            channels. Share ideas, collaborate, and build relationships in
+            real-time.
           </p>
         </motion.div>
 
@@ -436,7 +558,7 @@ export default function ChatInterface() {
             animate={controls}
             variants={{
               hidden: { opacity: 0, y: 50 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.7 } },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.7 } }
             }}
           >
             <Card className="bg-[#1e1f2e]/80 backdrop-blur-md border border-indigo-500/20 overflow-hidden shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl">
@@ -446,7 +568,7 @@ export default function ChatInterface() {
                   <div className="p-4 border-b border-white/10 flex items-center justify-between">
                     <h3 className="text-white font-semibold flex items-center">
                       <MessageSquare className="w-4 h-4 mr-2 text-indigo-400" />
-                      HarmonyHub
+                      CommuniHub
                     </h3>
                     <button className="text-gray-400 hover:text-indigo-400 transition-colors">
                       <Search className="w-4 h-4" />
@@ -484,10 +606,15 @@ export default function ChatInterface() {
                   <div className="p-3 border-t border-white/10 bg-[#1a1b26]/80">
                     <div className="flex items-center">
                       <Avatar className="h-8 w-8 mr-2 ring-2 ring-indigo-500/50">
-                        <img src="/placeholder.svg?height=32&width=32" alt="User" />
+                        <img
+                          src="/placeholder.svg?height=32&width=32"
+                          alt="User"
+                        />
                       </Avatar>
                       <div className="flex-1">
-                        <div className="text-sm text-white font-medium">Username</div>
+                        <div className="text-sm text-white font-medium">
+                          Username
+                        </div>
                         <div className="text-xs text-green-400">Online</div>
                       </div>
                       <div className="flex space-x-1">
@@ -504,7 +631,9 @@ export default function ChatInterface() {
                   <div className="p-4 border-b border-white/10 flex items-center">
                     <Hash className="h-5 w-5 text-gray-400 mr-2" />
                     <span className="text-white font-medium">welcome</span>
-                    <div className="ml-2 text-gray-400 text-sm">Welcome to the community!</div>
+                    <div className="ml-2 text-gray-400 text-sm">
+                      Welcome to the community!
+                    </div>
                     <div className="ml-auto flex space-x-3">
                       <button className="text-gray-400 hover:text-indigo-400 transition-colors">
                         <Bell className="h-5 w-5" />
@@ -548,7 +677,9 @@ export default function ChatInterface() {
                         </button>
                         <button
                           className={`${
-                            inputValue ? "text-indigo-500 hover:text-indigo-400" : "text-gray-500"
+                            inputValue
+                              ? "text-indigo-500 hover:text-indigo-400"
+                              : "text-gray-500"
                           } transition-colors`}
                         >
                           <Send className="h-5 w-5" />
@@ -557,10 +688,16 @@ export default function ChatInterface() {
                     </div>
                     <div className="mt-2 text-xs text-gray-500 flex items-center justify-between px-2">
                       <div>
-                        Press <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-gray-400">Enter</kbd> to send
+                        Press{" "}
+                        <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-gray-400">
+                          Enter
+                        </kbd>{" "}
+                        to send
                       </div>
                       <div>
-                        <button className="text-indigo-400 hover:underline">Upload files</button>
+                        <button className="text-indigo-400 hover:underline">
+                          Upload files
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -576,11 +713,15 @@ export default function ChatInterface() {
                   </div>
                   <div className="p-2 overflow-y-auto">
                     <div className="mb-2">
-                      <div className="text-xs text-gray-400 px-2 py-1 uppercase font-semibold">Online — 4</div>
+                      <div className="text-xs text-gray-400 px-2 py-1 uppercase font-semibold">
+                        Online — 4
+                      </div>
                       {memberItems.slice(0, 4)}
                     </div>
                     <div className="mb-2">
-                      <div className="text-xs text-gray-400 px-2 py-1 uppercase font-semibold">Offline — 2</div>
+                      <div className="text-xs text-gray-400 px-2 py-1 uppercase font-semibold">
+                        Offline — 2
+                      </div>
                       {memberItems.slice(4)}
                     </div>
                   </div>
@@ -591,5 +732,5 @@ export default function ChatInterface() {
         </div>
       </div>
     </section>
-  )
+  );
 }

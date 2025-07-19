@@ -1,3 +1,27 @@
 {
-    "editor.formatOnSave": true
+  // Đặt Prettier là formatter mặc định cho toàn bộ project
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+
+  // Tự động format khi lưu
+  "editor.formatOnSave": true,
+
+  // Chỉ định riêng cho TypeScript
+  "[typescript]": {
+    "editor.formatOnSave": true,
+    "prettier.tabWidth": 4
+  },
+
+  // Chỉ định riêng cho TSX (React)
+  "[typescriptreact]": {
+    "editor.formatOnSave": true,
+    "prettier.tabWidth": 2
+  },
+
+  "prettier.useTabs": false,
+  "editor.wordWrap": "off",
+  "prettier.semi": true,
+  "prettier.singleQuote": false,
+  "prettier.trailingComma": "none",
+  "prettier.bracketSpacing": true,
+  "prettier.arrowParens": "always"
 }

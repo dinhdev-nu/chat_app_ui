@@ -1,19 +1,19 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Card } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search, X } from "lucide-react"
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, X } from "lucide-react";
 
 // Emote categories and emotes
 const emoteCategories = [
   {
     id: "recent",
     name: "Recent",
-    emotes: ["😊", "👍", "❤️", "😂", "🎉", "🙌", "👏", "🔥"],
+    emotes: ["😊", "👍", "❤️", "😂", "🎉", "🙌", "👏", "🔥"]
   },
   {
     id: "smileys",
@@ -49,8 +49,8 @@ const emoteCategories = [
       "🤓",
       "😎",
       "🤩",
-      "🥳",
-    ],
+      "🥳"
+    ]
   },
   {
     id: "gestures",
@@ -82,8 +82,8 @@ const emoteCategories = [
       "✍️",
       "💅",
       "🤳",
-      "💪",
-    ],
+      "💪"
+    ]
   },
   {
     id: "love",
@@ -108,8 +108,8 @@ const emoteCategories = [
       "💘",
       "💝",
       "💟",
-      "♥️",
-    ],
+      "♥️"
+    ]
   },
   {
     id: "celebration",
@@ -136,30 +136,41 @@ const emoteCategories = [
       "🏅",
       "🥇",
       "🥈",
-      "🥉",
-    ],
-  },
-]
+      "🥉"
+    ]
+  }
+];
 
 interface EmotePanelProps {
-  onSelectEmote: (emote: string) => void
-  onClose: () => void
+  onSelectEmote: (emote: string) => void;
+  onClose: () => void;
 }
 
-export default function EmotePanel({ onSelectEmote, onClose }: EmotePanelProps) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [activeCategory, setActiveCategory] = useState("recent")
+export default function EmotePanel({
+  onSelectEmote,
+  onClose
+}: EmotePanelProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("recent");
 
   // Filter emotes based on search query
   const filteredEmotes = searchQuery
-    ? emoteCategories.flatMap((category) => category.emotes).filter((emote) => emote.includes(searchQuery))
-    : emoteCategories.find((category) => category.id === activeCategory)?.emotes || []
+    ? emoteCategories
+        .flatMap((category) => category.emotes)
+        .filter((emote) => emote.includes(searchQuery))
+    : emoteCategories.find((category) => category.id === activeCategory)
+        ?.emotes || [];
 
   return (
     <Card className="w-80 bg-[#1e1f2e]/95 backdrop-blur-md border border-indigo-500/20 shadow-lg overflow-hidden">
       <div className="p-3 border-b border-white/10 flex items-center justify-between">
         <h3 className="text-white font-medium">Emotes</h3>
-        <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8 text-gray-400 hover:text-white">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="h-8 w-8 text-gray-400 hover:text-white"
+        >
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -177,7 +188,11 @@ export default function EmotePanel({ onSelectEmote, onClose }: EmotePanelProps) 
       </div>
 
       {!searchQuery && (
-        <Tabs defaultValue="recent" value={activeCategory} onValueChange={setActiveCategory}>
+        <Tabs
+          defaultValue="recent"
+          value={activeCategory}
+          onValueChange={setActiveCategory}
+        >
           <div className="border-b  border-white/10">
             <TabsList className="w-full flex overflow-x-auto whitespace-nowrap px-0 bg-transparent scrollbar-hidden">
               {emoteCategories.map((category) => (
@@ -228,10 +243,12 @@ export default function EmotePanel({ onSelectEmote, onClose }: EmotePanelProps) 
               </motion.button>
             ))
           ) : (
-            <div className="col-span-7 py-8 text-center text-gray-400">No emotes found for "{searchQuery}"</div>
+            <div className="col-span-7 py-8 text-center text-gray-400">
+              No emotes found for "{searchQuery}"
+            </div>
           )}
         </div>
       )}
     </Card>
-  )
+  );
 }
