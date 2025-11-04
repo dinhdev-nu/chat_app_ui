@@ -7,10 +7,10 @@ import { FloatingIcons } from "@/components/floating-icons";
 
 export default function Hero() {
   return (
-    <div className="relative min-h-[calc(100vh-76px)] flex items-center">
-      {/* Floating icons background */}
-      <div className="absolute inset-0 overflow-hidden">
-        <FloatingIcons count={8} />
+    <div className="relative min-h-[calc(100vh-76px)] flex items-center will-change-transform">
+      {/* Floating icons background - reduced count */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <FloatingIcons count={6} />
       </div>
 
       <div className="container mx-auto px-6 relative z-10">
@@ -18,7 +18,7 @@ export default function Hero() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
             className="inline-block px-6 py-2 bg-indigo-500/20 rounded-full mb-6"
           >
             <span className="text-indigo-300 font-medium">Join CommuniHub</span>
@@ -27,7 +27,7 @@ export default function Hero() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
+            transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
           >
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6">
               Where Conversations
@@ -41,7 +41,7 @@ export default function Hero() {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{ duration: 0.4, delay: 0.15, ease: "easeOut" }}
             className="text-gray-400 text-xl mb-8 max-w-2xl mx-auto"
           >
             Join thousands of communities and connect with people who share your
@@ -52,7 +52,7 @@ export default function Hero() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
+            transition={{ duration: 0.4, delay: 0.2, ease: "easeOut" }}
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
             <Button
@@ -75,7 +75,7 @@ export default function Hero() {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
+            transition={{ duration: 0.4, delay: 0.3 }}
             className="mt-12 flex items-center justify-center"
           >
             <a

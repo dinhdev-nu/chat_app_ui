@@ -319,21 +319,24 @@ const MemoizedTypingIndicator = memo(function TypingIndicator({
 export default function ChatInterface() {
   const controls = useAnimation();
   const [ref, inView] = useInView({
-    triggerOnce: true, // Changed to true to only trigger once
-    threshold: 0.1
+    triggerOnce: true,
+    threshold: 0.1,
+    rootMargin: '50px' // Load earlier for better UX
   });
 
   const [isTyping, setIsTyping] = useState(false);
   const [inputValue, setInputValue] = useState("");
 
-  // Simulate typing indicator with reduced frequency
+  // Simulate typing indicator with reduced frequency - optimized
   useEffect(() => {
+    if (!inView) return; // Only run when component is visible
+    
     const typingInterval = setInterval(() => {
       setIsTyping((prev) => !prev);
-    }, 5000); // Increased to 5 seconds to reduce state updates
+    }, 6000); // Increased to 6 seconds
 
     return () => clearInterval(typingInterval);
-  }, []);
+  }, [inView]);
 
   useEffect(() => {
     if (inView) {
@@ -527,8 +530,8 @@ export default function ChatInterface() {
           initial="hidden"
           animate={controls}
           variants={{
-            hidden: { opacity: 0, y: 50 },
-            visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+            hidden: { opacity: 0, y: 20 },
+            visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
           }}
           className="text-center mb-16"
         >
@@ -557,8 +560,8 @@ export default function ChatInterface() {
             initial="hidden"
             animate={controls}
             variants={{
-              hidden: { opacity: 0, y: 50 },
-              visible: { opacity: 1, y: 0, transition: { duration: 0.7 } }
+              hidden: { opacity: 0, y: 20 },
+              visible: { opacity: 1, y: 0, transition: { duration: 0.5, delay: 0.2, ease: "easeOut" } }
             }}
           >
             <Card className="bg-[#1e1f2e]/80 backdrop-blur-md border border-indigo-500/20 overflow-hidden shadow-[0_0_15px_rgba(79,70,229,0.15)] rounded-xl">

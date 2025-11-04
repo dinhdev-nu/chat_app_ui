@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   MessageCircle,
@@ -27,33 +27,28 @@ const icons = [
 
 export function FloatingIcons({ count = 5 }) {
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
-  const particlesRef = useRef<
-    Array<{ x: number[]; y: number[]; rotate: number[] }>
-  >([]);
+  const [isClient, setIsClient] = useState(false);
 
-  // Initialize particles only once with memoization
-  const initializeParticles = useCallback(() => {
+  // Memoize particles configuration - only on client
+  const particlesConfig = useMemo(() => {
+    if (!isClient) return [];
+    
     return Array.from({ length: count }).map(() => ({
-      x: [
-        Math.random() * dimensions.width,
-        Math.random() * dimensions.width,
-        Math.random() * dimensions.width
-      ],
-      y: [
-        Math.random() * dimensions.height,
-        Math.random() * dimensions.height,
-        Math.random() * dimensions.height
-      ],
-      rotate: [0, 180, 360]
+      x: [Math.random() * 1200, Math.random() * 1200, Math.random() * 1200],
+      y: [Math.random() * 800, Math.random() * 800, Math.random() * 800],
+      rotate: [0, 180, 360],
+      duration: 20 + Math.random() * 10,
+      initialX: Math.random() * dimensions.width,
+      initialY: Math.random() * dimensions.height
     }));
-  }, [count, dimensions.width, dimensions.height]);
+  }, [count, isClient, dimensions.width, dimensions.height]);
 
-  // Set initial particles
+  // Set client-side flag
   useEffect(() => {
-    particlesRef.current = initializeParticles();
-  }, [initializeParticles]);
+    setIsClient(true);
+  }, []);
 
-  // Memoize the resize handler
+  // Debounced resize handler
   const handleResize = useCallback(() => {
     if (typeof window !== "undefined") {
       setDimensions({
@@ -64,30 +59,38 @@ export function FloatingIcons({ count = 5 }) {
   }, []);
 
   useEffect(() => {
-    // Update dimensions only on client side
     if (typeof window !== "undefined") {
       handleResize();
-      window.addEventListener("resize", handleResize);
-      return () => window.removeEventListener("resize", handleResize);
+      
+      // Throttle resize events
+      let timeoutId: NodeJS.Timeout;
+      const throttledResize = () => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(handleResize, 200);
+      };
+      
+      window.addEventListener("resize", throttledResize);
+      return () => {
+        clearTimeout(timeoutId);
+        window.removeEventListener("resize", throttledResize);
+      };
     }
   }, [handleResize]);
 
-  // Memoize the particles to prevent unnecessary re-renders
-  const particles = useMemo(() => {
-    return Array.from({ length: count }).map((_, i) => {
-      const particle = particlesRef.current[i] || {
-        x: [0, 0, 0],
-        y: [0, 0, 0],
-        rotate: [0, 180, 360]
-      };
+  // Don't render particles on server
+  if (!isClient) {
+    return <div className="relative w-full h-full pointer-events-none" />;
+  }
 
-      return (
+  return (
+    <div className="relative w-full h-full pointer-events-none">
+      {particlesConfig.map((particle, i) => (
         <motion.div
           key={i}
-          className="absolute"
+          className="absolute will-change-transform"
           initial={{
-            x: dimensions.width,
-            y: dimensions.height
+            x: particle.initialX,
+            y: particle.initialY
           }}
           animate={{
             x: particle.x,
@@ -95,19 +98,17 @@ export function FloatingIcons({ count = 5 }) {
             rotate: particle.rotate
           }}
           transition={{
-            duration: 20 + Math.random() * 10,
-            repeat: Number.POSITIVE_INFINITY,
+            duration: particle.duration,
+            repeat: Infinity,
             ease: "linear",
             repeatType: "reverse"
           }}
         >
-          <div className="m-0 p-0 relative w-16 h-16 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 flex items-center justify-center transform hover:scale-110 transition-transform">
+          <div className="w-16 h-16 bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 flex items-center justify-center pointer-events-auto hover:scale-110 transition-transform duration-200">
             {icons[i % icons.length]}
           </div>
         </motion.div>
-      );
-    });
-  }, [count, dimensions.width, dimensions.height]);
-
-  return <div className="relative w-full h-full">{particles}</div>;
+      ))}
+    </div>
+  );
 }

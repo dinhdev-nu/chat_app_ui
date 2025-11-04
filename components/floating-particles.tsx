@@ -1,21 +1,32 @@
 "use client"
 
-import { useEffect, useState, useRef, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { motion } from "framer-motion"
 
 export function FloatingParticles({ count = 10 }) {
   const [dimensions, setDimensions] = useState({ width: 1200, height: 800 })
-  const particlesRef = useRef<Array<{ x: number[]; y: number[] }>>([])
-
-  // Initialize particles only once
-  useEffect(() => {
-    particlesRef.current = Array.from({ length: count }).map(() => ({
-      x: [Math.random() * dimensions.width, Math.random() * dimensions.width, Math.random() * dimensions.width],
-      y: [Math.random() * dimensions.height, Math.random() * dimensions.height, Math.random() * dimensions.height],
+  const [isClient, setIsClient] = useState(false)
+  
+  // Memoize particles to prevent recreation on every render - only on client
+  const particles = useMemo(() => {
+    if (!isClient) return []
+    
+    return Array.from({ length: count }).map(() => ({
+      x: [Math.random() * 1200, Math.random() * 1200, Math.random() * 1200],
+      y: [Math.random() * 800, Math.random() * 800, Math.random() * 800],
+      opacity: (Math.floor(Math.random() * 30) + 20) / 100,
+      duration: 20 + Math.random() * 10,
+      initialX: Math.random() * dimensions.width,
+      initialY: Math.random() * dimensions.height
     }))
-  }, [count, dimensions.width, dimensions.height])
+  }, [count, isClient, dimensions.width, dimensions.height])
 
-  // Memoize the resize handler
+  // Set client-side flag
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Debounced resize handler
   const handleResize = useCallback(() => {
     setDimensions({
       width: window.innerWidth,
@@ -24,36 +35,54 @@ export function FloatingParticles({ count = 10 }) {
   }, [])
 
   useEffect(() => {
-    // Update dimensions only on client side
     if (typeof window !== "undefined") {
       handleResize()
-      window.addEventListener("resize", handleResize)
-      return () => window.removeEventListener("resize", handleResize)
+      
+      // Throttle resize events
+      let timeoutId: NodeJS.Timeout
+      const throttledResize = () => {
+        clearTimeout(timeoutId)
+        timeoutId = setTimeout(handleResize, 150)
+      }
+      
+      window.addEventListener("resize", throttledResize)
+      return () => {
+        clearTimeout(timeoutId)
+        window.removeEventListener("resize", throttledResize)
+      }
     }
   }, [handleResize])
 
+  // Don't render particles on server
+  if (!isClient) {
+    return <div className="relative w-full h-full pointer-events-none" />
+  }
+
   return (
-    <div className="relative w-full h-full">
-      {particlesRef.current.map((particle, i) => (
+    <div className="relative w-full h-full pointer-events-none">
+      {particles.map((particle, i) => (
         <motion.div
           key={i}
-          className="absolute"
+          className="absolute will-change-transform"
           initial={{
-            x: Math.random() * dimensions.width,
-            y: Math.random() * dimensions.height,
+            x: particle.initialX,
+            y: particle.initialY,
           }}
           animate={{
             x: particle.x,
             y: particle.y,
           }}
           transition={{
-            duration: 20 + Math.random() * 10,
-            repeat: Number.POSITIVE_INFINITY,
+            duration: particle.duration,
+            repeat: Infinity,
             ease: "linear",
             repeatType: "reverse",
           }}
         >
-          <div className={`w-1 h-1 rounded-full bg-indigo-500 opacity-${Math.floor(Math.random() * 50) + 20}`} />
+          <div 
+            className="w-1 h-1 rounded-full bg-indigo-500" 
+            style={{ opacity: particle.opacity }}
+          />
         </motion.div>
       ))}
     </div>

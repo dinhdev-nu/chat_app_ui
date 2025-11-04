@@ -24,6 +24,34 @@
   --ring: 224.3 76.3% 48%;
 }
 
+/* Performance optimizations */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Optimize scroll performance */
+.scroll-smooth {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hardware acceleration for animations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Optimize repaints */
+.gpu-accelerate {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
 .bg-grid-white\/\[0\.02\] {
   background-size: 30px 30px;
   background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
@@ -44,9 +72,10 @@
 
 .animate-float {
   animation: float 6s ease-in-out infinite;
+  will-change: transform;
 }
 
-/* Custom scrollbar for the chat interface */
+/* Custom scrollbar for the chat interface - optimized */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -59,13 +88,14 @@
 ::-webkit-scrollbar-thumb {
   background: rgba(79, 70, 229, 0.3);
   border-radius: 10px;
+  transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(79, 70, 229, 0.5);
 }
 
-/* Gradient animations */
+/* Gradient animations - optimized with will-change */
 @keyframes gradient-shift {
   0% {
     background-position: 0% 50%;
@@ -81,6 +111,7 @@
 .animate-gradient {
   background-size: 200% 200%;
   animation: gradient-shift 15s ease infinite;
+  will-change: background-position;
 }
 
 /* Glow effect */
@@ -92,16 +123,17 @@
   text-shadow: 0 0 10px rgba(79, 70, 229, 0.5);
 }
 
-/* Hover effects */
+/* Hover effects - optimized */
 .hover-lift {
-  transition: transform 0.3s ease;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
 }
 
 .hover-lift:hover {
   transform: translateY(-5px);
 }
 
-/* Typing animation */
+/* Typing animation - optimized */
 @keyframes blink {
   0% {
     opacity: 0.2;
@@ -126,9 +158,9 @@
   animation-delay: 0.4s;
 }
 
-/* Message hover effects */
+/* Message hover effects - lighter */
 .message-hover-effect {
-  transition: all 0.2s ease;
+  transition: background-color 0.15s ease;
 }
 
 .message-hover-effect:hover {
@@ -150,18 +182,29 @@
 
 .animate-pulse-slow {
   animation: pulse 3s infinite ease-in-out;
+  will-change: transform;
 }
 
-
-/* styles/globals.css hoặc global.css */
+/* Scrollbar hidden - optimized */
 .scrollbar-hidden {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* IE 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 .scrollbar-hidden::-webkit-scrollbar {
-  display: none; /* Chrome, Safari */
+  display: none;
 }
 
 #recent {
   margin-left: 3.1rem;
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
